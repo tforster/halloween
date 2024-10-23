@@ -1,0 +1,22 @@
+{
+  // ESP32 USB port - adjust for your system
+  // Linux/WSL: /dev/ttyUSB0 or /dev/ttyACM0
+  // macOS: /dev/cu.usbserial-*
+  // Windows: COM3, COM4, etc.
+  "idf.port": "/dev/ttyUSB0",
+
+  // Python language server configuration
+  "python.languageServer": "Pylance",
+  
+  // Suppress warnings for MicroPython modules not found locally
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingModuleSource": "none",
+    "reportShadowedImports": "none"
+  },
+
+  // CircuitPython/MicroPython board detection
+  // ESP32-WROOM board identifiers
+  "circuitpython.board.version": null,
+  "circuitpython.board.vid": "0x1A86",
+  "circuitpython.board.pid": "0x7523"
+}

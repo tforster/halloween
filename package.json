@@ -1,0 +1,18 @@
+{
+  "author": "Troy Forster",
+  "bugs": {
+    "url": "https://github.com/tforster/halloween/issues"
+  },
+  "description": "Effects for Halloween 2024.",
+  "homepage": "https://github.com/tforster/halloween#readme",
+  "license": "MIT",
+  "name": "@tforster/halloween",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tforster/halloween.git"
+  },
+  "scripts": {
+    "thonny": "python3.13 /home/tforster/.local/lib/python3.13/site-packages/thonny "
+  },
+  "version": "2024.0.0"
+}
