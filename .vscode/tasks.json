@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Upload to ESP32",
+      "type": "shell",
+      "command": "/home/tforster/.local/bin/thonny/mpremote",
+      "args": [
+        "connect",
+        "/dev/ttyUSB0", // Adjust this to match your COM port
+        "fs",
+        "put",
+        "${file}",
+        ":${fileBasename}"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "detail": "Upload the current file to ESP32"
+    }
+  ]
+}
