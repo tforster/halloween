@@ -3,12 +3,12 @@ import os
 import sys
 
 def fileExists(filename):
-    print("checking", filename)
+    print("Loading", filename, "...")
     try:
         # Check if main.py exists in the root directory
         files = [f for f in os.listdir()]
         found = filename in files
-        print("found", found)
+        
         return found
     except Exception as e:
         print("Error checking for main.py:", e)
@@ -16,7 +16,7 @@ def fileExists(filename):
 
 def main():
     # Perform any necessary initialization here
-    print("Boot script running...")
+    print("Booting ...")
 
     # Check if main.py exists
     if fileExists("main.py"):
