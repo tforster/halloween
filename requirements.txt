@@ -7,6 +7,10 @@
 # Serial communication with Pico (for devops scripts)
 pyserial>=3.5
 
+# MicroPython CLI tools for Pico development
+mpremote>=1.23.0       # Official MicroPython tool for scripting
+rshell>=0.0.32         # Interactive shell for file management
+
 # Audio file processing (convert/prepare MP3 files for DFPlayer)
 pydub>=0.25.1
 

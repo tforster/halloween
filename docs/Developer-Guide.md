@@ -1,48 +1,53 @@
 # Developer Guide <!-- omit in toc -->
 
-> **Historical Note:** This guide documents the **2025 Raspberry Pi Pico 2 implementation**.  
+> [!NOTE]
+> This guide documents the **2025 Raspberry Pi Pico 2 implementation**.  
 > For the 2024 ESP32 version, see the [`2024` tag](https://github.com/tforster/halloween/tree/2024).
 
 A living document of design decisions, challenges, and solutions for the Halloween Lightning & Thunder effect system.
 
 ## Table of Contents <!-- omit in toc -->
 
-- [Architecture Decision Records (ADRs)](#architecture-decision-records-adrs)
-  - [ADR-005: Migration from ESP32 to Raspberry Pi Pico 2 (2025)](#adr-005-migration-from-esp32-to-raspberry-pi-pico-2-2025)
-  - [ADR-006: External MP3 Player Module for Audio](#adr-006-external-mp3-player-module-for-audio)
-  - [ADR-007: Random Interval Autonomous Triggering](#adr-007-random-interval-autonomous-triggering)
-  - [ADR-008: Multi-Board Independent Operation](#adr-008-multi-board-independent-operation)
-- [Technical Challenges \& Solutions](#technical-challenges--solutions)
-  - [Challenge: DFPlayer Mini Serial Communication](#challenge-dfplayer-mini-serial-communication)
-  - [Challenge: MP3 File Naming Convention](#challenge-mp3-file-naming-convention)
-  - [Challenge: Power Distribution for Three Boards](#challenge-power-distribution-for-three-boards)
-  - [Challenge: Pico 2 Development Workflow](#challenge-pico-2-development-workflow)
-- [Development Environment Setup](#development-environment-setup)
-  - [Initial Project Setup (One Time)](#initial-project-setup-one-time)
-  - [Daily Development Workflow](#daily-development-workflow)
-  - [Virtual Environment Quick Reference](#virtual-environment-quick-reference)
-  - [NPM Scripts Reference](#npm-scripts-reference)
-  - [Project File Structure](#project-file-structure)
-  - [VS Code Pico Extension Setup](#vs-code-pico-extension-setup)
-  - [MicroPython on Pico 2](#micropython-on-pico-2)
-- [Hardware Assembly Notes](#hardware-assembly-notes)
-- [Code Structure](#code-structure)
-- [Testing \& Debugging](#testing--debugging)
-- [DevOps Scripts \& Tooling](#devops-scripts--tooling)
-  - [Virtual Environment Setup](#virtual-environment-setup)
-  - [Audio Preparation Script](#audio-preparation-script)
-  - [MP3 Serial Communication Tester](#mp3-serial-communication-tester)
-  - [Python Code Quality Tools](#python-code-quality-tools)
-  - [Project Configuration Files](#project-configuration-files)
-  - [Adding New DevOps Scripts](#adding-new-devops-scripts)
-  - [Deployment to Pico](#deployment-to-pico)
-- [Known Issues \& Gotchas](#known-issues--gotchas)
-- [Future Improvements](#future-improvements)
-- [Hardware References](#hardware-references)
+- [1. Architecture Decision Records (ADRs)](#1-architecture-decision-records-adrs)
+  - [1.1. ADR-005: Migration from ESP32 to Raspberry Pi Pico 2 (2025)](#11-adr-005-migration-from-esp32-to-raspberry-pi-pico-2-2025)
+  - [1.2. ADR-006: External MP3 Player Module for Audio](#12-adr-006-external-mp3-player-module-for-audio)
+  - [1.3. ADR-007: Random Interval Autonomous Triggering](#13-adr-007-random-interval-autonomous-triggering)
+  - [1.4. ADR-008: Multi-Board Independent Operation](#14-adr-008-multi-board-independent-operation)
+- [2. Technical Challenges \& Solutions](#2-technical-challenges--solutions)
+  - [2.1. Challenge: DFPlayer Mini Serial Communication](#21-challenge-dfplayer-mini-serial-communication)
+  - [2.2. Challenge: MP3 File Naming Convention](#22-challenge-mp3-file-naming-convention)
+  - [2.3. Challenge: Power Distribution for Three Boards](#23-challenge-power-distribution-for-three-boards)
+  - [2.4. Challenge: Pico 2 Development Workflow](#24-challenge-pico-2-development-workflow)
+- [3. Development Environment Setup](#3-development-environment-setup)
+  - [3.1. Initial Project Setup (One Time)](#31-initial-project-setup-one-time)
+  - [3.2. Daily Development Workflow](#32-daily-development-workflow)
+  - [3.3. NPM Scripts Reference](#33-npm-scripts-reference)
+  - [3.4. Project File Structure](#34-project-file-structure)
+  - [3.5. MicroPython on Pico 2](#35-micropython-on-pico-2)
+- [4. Hardware Assembly Notes](#4-hardware-assembly-notes)
+  - [Pin Assignments (Final Configuration)](#pin-assignments-final-configuration)
+  - [Wiring Diagrams](#wiring-diagrams)
+    - [Complete System Wiring (Dual 5V Supply Configuration)](#complete-system-wiring-dual-5v-supply-configuration)
+    - [Level Shifter Detail](#level-shifter-detail)
+    - [DFPlayer Mini Wiring Detail](#dfplayer-mini-wiring-detail)
+  - [Power Supply Specifications](#power-supply-specifications)
+    - [Component Power Requirements](#component-power-requirements)
+    - [Recommended Power Supplies (Per Board)](#recommended-power-supplies-per-board)
+    - [Dual Supply Wiring Diagram](#dual-supply-wiring-diagram)
+    - [Safety Considerations](#safety-considerations)
+    - [Multi-Board Deployment (3 Boards Total)](#multi-board-deployment-3-boards-total)
+- [5. Code Structure](#5-code-structure)
+- [6. Testing \& Debugging](#6-testing--debugging)
+- [7. DevOps Scripts \& Tooling](#7-devops-scripts--tooling)
+  - [7.1. MP3 Serial Communication Tester](#71-mp3-serial-communication-tester)
+  - [7.2. Python Code Quality Tools](#72-python-code-quality-tools)
+  - [7.3. Adding New DevOps Scripts](#73-adding-new-devops-scripts)
+- [8. TODO List](#8-todo-list)
+- [9. Known Issues \& Gotchas](#9-known-issues--gotchas)
 
-## Architecture Decision Records (ADRs)
+## 1. Architecture Decision Records (ADRs)
 
-### ADR-005: Migration from ESP32 to Raspberry Pi Pico 2 (2025)
+### 1.1. ADR-005: Migration from ESP32 to Raspberry Pi Pico 2 (2025)
 
 **Status:** Accepted (2025 season)
 
@@ -93,9 +98,7 @@ Migrate to Raspberry Pi Pico 2 with dedicated MP3 player module for 2025 season.
 
 **Historical Reference:** See [2024 ESP32 implementation](https://github.com/tforster/halloween/tree/2024) for comparison.
 
----
-
-### ADR-006: External MP3 Player Module for Audio
+### 1.2. ADR-006: External MP3 Player Module for Audio
 
 **Status:** Accepted
 
@@ -139,9 +142,7 @@ Use DFPlayer Mini-based MP3 player module with MicroSD card.
 - Audio quality dependent on MP3 encoding settings
 - SD card must be formatted FAT32 with specific structure
 
----
-
-### ADR-007: Random Interval Autonomous Triggering
+### 1.3. ADR-007: Random Interval Autonomous Triggering
 
 **Status:** Accepted
 
@@ -180,9 +181,7 @@ def autonomous_mode():
 - Testing takes longer (must wait for random triggers)
 - Can add manual trigger as override for testing
 
----
-
-### ADR-008: Multi-Board Independent Operation
+### 1.4. ADR-008: Multi-Board Independent Operation
 
 **Status:** Accepted
 
@@ -219,11 +218,9 @@ Three independent boards, each with own random trigger timing.
 - Troubleshooting requires checking each board individually
 - Software updates must be applied to all 3 boards
 
----
+## 2. Technical Challenges & Solutions
 
-## Technical Challenges & Solutions
-
-### Challenge: DFPlayer Mini Serial Communication
+### 2.1. Challenge: DFPlayer Mini Serial Communication
 
 **Problem:**  
 DFPlayer Mini uses proprietary serial protocol with checksums and specific command structure. Documentation is sparse and examples are mostly for Arduino.
@@ -244,9 +241,7 @@ DFPlayer Mini uses proprietary serial protocol with checksums and specific comma
 
 **Code Reference:** `mp3_player.py` (to be created)
 
----
-
-### Challenge: MP3 File Naming Convention
+### 2.2. Challenge: MP3 File Naming Convention
 
 **Problem:**  
 DFPlayer Mini expects specific file naming: `0001.mp3`, `0002.mp3`, etc. Files must be copied to SD card in specific order (first file copied becomes 0001).
@@ -268,9 +263,7 @@ DFPlayer Mini expects specific file naming: `0001.mp3`, `0002.mp3`, etc. Files m
 # 3. Copy to SD card root directory in order
 ```
 
----
-
-### Challenge: Power Distribution for Three Boards
+### 2.3. Challenge: Power Distribution for Three Boards
 
 **Problem:**  
 Three complete boards means:
@@ -295,33 +288,18 @@ Three complete boards means:
 - NeoPixels (lightning effect): ~5-6A typical (30% duty cycle)
 - **Total per board:** 6A at 5V (30W)
 
----
-
-### Challenge: Pico 2 Development Workflow
+### 2.4. Challenge: Pico 2 Development Workflow
 
 **Problem:**  
 First time using Raspberry Pi Pico platform. Workflow differs from ESP32 development.
 
 **Solution:**
 
-- Use official VS Code Pico extension for integrated development
-- Extension handles firmware flashing automatically
-- Built-in REPL for interactive testing
-- File upload via extension (no need for separate tools like ampy)
+- Use mpremote wrapped in a shell script and aliased in package.json as `npm run {cmd}`
 
-**Key Differences from ESP32:**
-| Aspect | ESP32 (2024) | Pico 2 (2025) |
-|--------|--------------|--------------|
-| Firmware flash | esptool (manual) | VS Code extension (automatic) |
-| File upload | ampy | VS Code extension |
-| REPL | mpremote | VS Code integrated |
-| Debugging | Print statements | VS Code debugger support |
+## 3. Development Environment Setup
 
----
-
-## Development Environment Setup
-
-### Initial Project Setup (One Time)
+### 3.1. Initial Project Setup (One Time)
 
 **Prerequisites:**
 
@@ -341,12 +319,7 @@ git checkout 2025
 # 2. Install Node.js dependencies (for linting/formatting)
 npm install
 
-# 3. Create Python virtual environment
-python3.13 -m venv venv
-
-# 4. Activate virtual environment
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate   # Windows
+# Note that venv is not used since the local src folder will be synchronised to the Pico 2 directly.
 
 # 5. Install Python dependencies
 pip install -r requirements.txt
@@ -372,73 +345,24 @@ brew install ffmpeg
 # Download from: https://ffmpeg.org/download.html
 ```
 
----
+### 3.2. Daily Development Workflow
 
-### Daily Development Workflow
+> [!note]
+> Common development procedures (flashing firmware, uploading files, preparing audio) are documented in AGENTS.md.
+> See [Common Development Tasks](../AGENTS.md#common-development-tasks) for step-by-step instructions.
 
 **Every time you work on the project:**
 
 ```bash
-# Option 1: Quick activation helper
-source activate.sh
-
-# Option 2: Manual activation
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate   # Windows
-
-# Your terminal prompt will change to show (venv)
-
-# Now you can run Python scripts:
-python devops/prepare_audio.py
-python devops/test_mp3_serial.py /dev/ttyUSB0
-
-# Or use npm scripts:
-npm run audio:prep
-npm run audio:prep:dry
-
-# When done, deactivate:
-deactivate
+# Connect the Pico 2 to the USB port
+# Use deployment scripts from devops/ folder
+# See Common Development Tasks in AGENTS.md
 ```
 
----
-
-### Virtual Environment Quick Reference
-
-| Task                     | Command                                            |
-| ------------------------ | -------------------------------------------------- |
-| Create venv              | `python3.13 -m venv venv`                          |
-| Activate (Linux/Mac)     | `source venv/bin/activate` or `source activate.sh` |
-| Activate (Windows)       | `venv\Scripts\activate`                            |
-| Deactivate               | `deactivate`                                       |
-| Install requirements     | `pip install -r requirements.txt`                  |
-| Install dev requirements | `pip install -r requirements-dev.txt`              |
-| Update pip               | `pip install --upgrade pip`                        |
-| List installed packages  | `pip list`                                         |
-| Freeze requirements      | `pip freeze > requirements.txt`                    |
-
-**Understanding Virtual Environments:**
-
-Virtual environments are Python's equivalent of Node.js's `node_modules/`. They provide isolated Python interpreters and packages per project.
-
-| Concept        | Node.js                            | Python                             |
-| -------------- | ---------------------------------- | ---------------------------------- |
-| **Isolation**  | `node_modules/` per project        | `venv/` per project                |
-| **Setup**      | Automatic with `npm install`       | Manual: `python -m venv venv`      |
-| **Activation** | Automatic when running npm scripts | Manual: `source venv/bin/activate` |
-| **Location**   | Always `./node_modules`            | Convention: `./venv` or `./.venv`  |
-
-**Why use virtual environments?**
-
-- Isolate project dependencies from system Python
-- Avoid version conflicts between projects
-- Easy to recreate environments from `requirements.txt`
-- Standard practice in Python development
-
----
-
-### NPM Scripts Reference
+### 3.3. NPM Scripts Reference
 
 ```bash
+# TODO: Add the new mpremote shell scripts from devops folder
 # Audio preparation
 npm run audio:prep          # Prepare audio files for SD card
 npm run audio:prep:dry      # Preview changes without modifying files
@@ -450,11 +374,9 @@ npm run type:py             # Type check with mypy
 npm run test:py             # Run pytest tests
 ```
 
----
+### 3.4. Project File Structure
 
-### Project File Structure
-
-```
+```text
 /home/tforster/dev/TroyForster/Halloween/
 ├── src/                    # MicroPython code (runs ON Pico)
 │   ├── boot.py            # Bootstrap loader
@@ -490,38 +412,9 @@ npm run test:py             # Run pytest tests
 
 - `src/` contains code that runs **ON the Pico** (MicroPython)
 - `devops/` contains tools that run **on your host machine** (Python 3.13)
-- `venv/` is only needed for `devops/` scripts, not for Pico code
 - Audio files go on the MicroSD card in the MP3 module, not on the Pico
 
----
-
-### VS Code Pico Extension Setup
-
-**Install Extension:**
-
-1. Open VS Code
-2. Install "Raspberry Pi Pico" extension by Raspberry Pi
-3. Press `Ctrl+Shift+P` → "MicroPython: Configure Project"
-4. Select "Raspberry Pi Pico 2"
-5. Extension downloads and flashes latest MicroPython firmware
-
-**Workflow:**
-
-```bash
-# 1. Connect Pico 2 via USB
-# 2. VS Code detects it automatically
-# 3. Upload files via command palette: "Upload Project to Pico"
-# 4. Or use file explorer right-click: "Upload to Pico"
-```
-
-**REPL Access:**
-
-- Bottom panel in VS Code shows Pico REPL automatically
-- Can also use Thonny IDE as alternative
-
----
-
-### MicroPython on Pico 2
+### 3.5. MicroPython on Pico 2
 
 **Firmware:**
 
@@ -540,9 +433,7 @@ npm run test:py             # Run pytest tests
 - All functionality available in standard MicroPython
 - MP3 player interface implemented from scratch
 
----
-
-## Hardware Assembly Notes
+## 4. Hardware Assembly Notes
 
 **Per Board Assembly (3x total):**
 
@@ -551,48 +442,338 @@ npm run test:py             # Run pytest tests
    - Connect USB cable for development
 
 2. **MP3 Player Module**
-   - Wire TX → Pico GPIO X (RX pin)
-   - Wire RX → Pico GPIO X (TX pin)
-   - Wire VCC → Pico 3.3V or 5V (check module specs)
-   - Wire GND → Pico GND
+   - Wire TX → Pico GPIO 4 (Pico TX → Module RX, Pin 2)
+   - Wire RX → Pico GPIO 5 (Pico RX ← Module TX, Pin 3)
+   - Wire VCC → 5V power rail
+   - Wire GND → Common GND
    - Insert formatted MicroSD card with MP3 files
-   - Connect audio output to amplifier input
+   - Connect audio output to amplifier input (SPK_1/SPK_2 pins recommended)
 
 3. **60W BTL Class D Amplifier**
-   - [Amazon Product Link](https://www.amazon.ca/dp/B0D8HCV43H)
    - Connect MP3 module audio output to amplifier input
    - Connect 12V power supply
    - Connect speaker(s) to amplifier output
    - Ensure proper polarity
 
 4. **Logic Level Shifter**
-   - Wire input side to Pico 3.3V
-   - Wire output side to 5V power rail
-   - Wire ground to ground rail
-   - Wire Pico GPIO → Shifter input
+   - Wire LV (low voltage) side to Pico 3.3V
+   - Wire HV (high voltage) side to 5V power rail
+   - Wire both grounds to common ground rail
+   - Wire Pico GPIO 16 → Shifter input
    - Wire Shifter output → NeoPixel data in
 
 5. **NeoPixel Strip (300 LEDs)**
    - Wire data in to logic level shifter output
-   - Wire 5V to power supply (ensure 5-6A capacity)
+   - Wire 5V to power supply (ensure 8A capacity)
    - Wire ground to ground rail
 
 6. **Optional: Trigger Switch**
-   - Wire one terminal to Pico GPIO
-   - Wire other terminal to GND
-   - Enable pull-up resistor in code
+   - Wire one terminal to Pico GPIO 15
+   - Wire other terminal to 3.3V (active high)
+   - Set USE_MANUAL_TRIGGER = True in main.py
 
 **Power Distribution:**
 
-- 5V supply → Pico + NeoPixels
-- 12V supply → Amplifier
+- 5V 8A supply → Pico + MP3 Module + NeoPixels
+- 12V 5A supply → Amplifier (isolated)
 - Ensure all grounds are common
+
+> [!note]
+> Hardware component specifications, purchase links, and datasheets are maintained in AGENTS.md.
+> See [Hardware Configuration](../AGENTS.md#hardware-configuration) for complete details.
+
+### Pin Assignments (Final Configuration)
+
+| GPIO Pin | Function       | Direction | Hardware Connection                | Rationale                                                    |
+| -------- | -------------- | --------- | ---------------------------------- | ------------------------------------------------------------ |
+| **GP16** | NeoPixel Data  | Output    | Level Shifter Input → NeoPixel DIN | Available GPIO, not needed for UART, suitable for PIO timing |
+| **GP4**  | MP3 TX         | Output    | Pico TX → DFPlayer Mini RX (Pin 2) | UART1 TX - dedicated hardware UART                           |
+| **GP5**  | MP3 RX         | Input     | Pico RX ← DFPlayer Mini TX (Pin 3) | UART1 RX - paired with GP4                                   |
+| **GP15** | Manual Trigger | Input     | Button to 3.3V (optional)          | Available GPIO with pull-down support                        |
+| **GP25** | Status LED     | Output    | Onboard LED                        | Built-in LED for status indication                           |
+
+**Pin Selection Rationale:**
+
+- **UART1 (GP4/GP5)**: Chosen over UART0 to avoid conflicts with USB serial debugging
+- **GPIO 16**: Not required for either UART, suitable for NeoPixel PIO operations
+- **GPIO 15**: Readily available for future expansion features
+- **All pins verified** against [Pico 2 Datasheet](https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf)
+
+### Wiring Diagrams
+
+#### Complete System Wiring (Dual 5V Supply Configuration)
+
+```text
+5V Supply 1 (8A)              5V Supply 2 (8A)              12V Supply (5A)
+      │                             │                            │
+      │                             │                            │
+      ├──→ Pico 2 VBUS              │                            │
+      │                             │                            │
+      ├──→ DFPlayer Mini VCC        │                            │
+      │                             │                            │
+      ├──→ Level Shifter HV         │                            │
+      │                             │                            │
+      │                             │                            │
+      └──→ NeoPixels 1-150          └──→ NeoPixels 151-300       └──→ Amplifier 12V
+           (at pixel 1)                  (at pixel 150/151)
+           │                             │                             │
+           ├─ 5V ─────────────────────┐  ├─ 5V ──────────────────-─┐   │
+           ├─ GND ────────────────────┼──┼─ GND ─────────────────-─┼───┼─→ Common GND
+           └─ DIN ← GP16 (via shifter)   │                         │   │
+                    │                    │                         │   │
+                    │                    │                         │   │
+         ┌──────────┴─────-───┐    ┌──────────────┐         ┌──────┴──────────┐
+         │  Raspberry Pi      │    │  DFPlayer    │         │   60W Amplifier │
+         │    Pico 2          │    │    Mini      │         │   (Class D BTL) │
+         │                    │    │              │         │                 │
+         │  GP16 ─────────────┼────┼──────────────┼─────┐   │  Audio In       │
+         │  (via Level        │    │              │     │   │   ↑             │
+         │   Shifter)         │    │              │     │   │   │             │
+         │                    │    │              │     │   │   │             │
+         │  GP4 (TX) ─────────┼────┼──→ RX (2)    │     │   │   │             │
+         │  GP5 (RX) ←────────┼────┼─── TX (3)    │     │   │   │             │
+         │                    │    │              │     │   │   │             │
+         │  3.3V ─────────────┼────┼──────────────┼─────┼───┼───┘             │
+         │                    │    │  SPK_1 ──────┼─────┘   │                 │
+         │                    │    │  SPK_2 ──────┼─────────│→ Speaker Out 🔊 │
+         └────────────────────┘    └──────────────┘         └─────────────────┘
+
+Key Connections:
+  • Data Signal: Pico GP16 → Level Shifter → Pixel 1 → ... → Pixel 300
+  • Power: Supply 1 powers pixels 1-150, Supply 2 powers pixels 151-300
+  • Common GND: All three supplies must share common ground
+  • Audio: DFPlayer SPK_1/SPK_2 → Amplifier Input
+```
+
+#### Level Shifter Detail
+
+```text
+Level Shifter (Bidirectional)
+┌────────────────────────────┐
+│                            │
+│   LV (Low Voltage Side)    │         HV (High Voltage Side)
+│   ────────────────────     │         ────────────────────
+│                            │
+│   VCC_L ←── 3.3V (Pico)    │         VCC_H ←── 5V (LED Rail)
+│   GND   ←── Common GND     │         GND ←── Common GND
+│   I/O1  ←── GP16 (Pico)    │         I/O1 ──→ NeoPixel DIN
+│                            │
+└────────────────────────────┘
+```
+
+#### DFPlayer Mini Wiring Detail
+
+```text
+DFPlayer Mini Module (Top View)
+┌─────────────────────────────┐
+│  [MicroSD Card Slot]        │
+│                             │
+│  Pin 1: VCC ←── 5V          │
+│  Pin 2: RX  ←── GP4 (TX)    │
+│  Pin 3: TX  ──→ GP5 (RX)    │
+│  Pin 4: (not used)          │
+│  Pin 5: (not used)          │
+│  Pin 6: SPK_1 ──→ Amp In+   │
+│  Pin 7: GND ←── Common GND  │
+│  Pin 8: SPK_2 ──→ Amp In-   │
+│                             │
+│  [3.5mm Audio Jack]         │
+└─────────────────────────────┘
+
+Note: Use either SPK pins OR 3.5mm jack, not both
+      SPK pins provide higher quality output to amplifier
+```
+
+### Power Supply Specifications
+
+#### Component Power Requirements
+
+| Component               | Voltage   | Typical Current    | Maximum Current | Notes                                      |
+| ----------------------- | --------- | ------------------ | --------------- | ------------------------------------------ |
+| **Pico 2**              | 5V (VBUS) | 50-100mA           | 150mA           | Powered via USB or VBUS pin                |
+| **DFPlayer Mini**       | 5V        | 20-30mA idle       | 200mA peak      | Use 5V for best performance                |
+| **NeoPixels (150)**     | 5V        | 2.5-3A (lightning) | 9A (full white) | Lightning uses ~30% duty cycle per segment |
+| **Logic Level Shifter** | 5V + 3.3V | <10mA              | 50mA            | Bidirectional, minimal power               |
+| **60W Amplifier**       | 12V       | Variable           | 5A (60W/12V)    | Separate power required                    |
+
+#### Recommended Power Supplies (Per Board)
+
+**⚠️ CRITICAL: Use Dual 5V Supplies for Reliable NeoPixel Operation**
+
+**Why Two Supplies?**
+
+A single 5V 8A supply powering 300 NeoPixels over 5 meters causes:
+
+- **Voltage drop:** 5.0V at start → 4.2-4.5V at end (below WS2812B spec)
+- **Color shift:** Especially in white/blue
+- **Capacity issues:** 6A load on 8A supply = 75% (too close to limit)
+- **Thermal stress:** Supply runs hot, reduced reliability
+
+**Solution: Split into Two Segments**
+
+Each 150-pixel segment gets its own supply → eliminates voltage drop, distributes load.
 
 ---
 
-## Code Structure
+**Power Supply 1: 5V 8A for Logic + Pixels 1-150**
 
+- **Powers:** Raspberry Pi Pico 2, DFPlayer Mini, NeoPixels 1-150, Logic Level Shifter
+- **Rating:** 5V 8A (40W)
+- **Typical Load:** ~3.2A during lightning effect
+- **Load Percentage:** 40% (comfortable headroom)
+- **Location:** Start of NeoPixel strip (pixel 1)
+- **Recommended:** Mean Well RS-50-5 (5V 10A, 50W) or equivalent
+- **Wire Gauge:**
+  - 5V to NeoPixels 1-150: 18 AWG
+  - 5V to Pico/MP3: 22 AWG sufficient
+  - Ground returns: 18 AWG
+
+**Power Supply 2: 5V 8A for Pixels 151-300**
+
+- **Powers:** NeoPixels 151-300 only
+- **Rating:** 5V 8A (40W)
+- **Typical Load:** ~3A during lightning effect
+- **Load Percentage:** 37% (comfortable headroom)
+- **Location:** Midpoint of NeoPixel strip (~2.5m, pixel 150)
+- **Recommended:** Mean Well RS-50-5 (5V 10A, 50W) or equivalent
+- **Wire Gauge:**
+  - 5V to NeoPixels 151-300: 18 AWG
+  - Ground return: 18 AWG
+  - **IMPORTANT:** Do NOT connect data signal here (data flows through from pixel 1)
+
+**Power Supply 3: 12V 5A for Amplifier**
+
+- **Powers:** 60W Class D Amplifier only
+- **Rating:** 12V 5A (60W)
+- **Typical Load:** Variable by volume
+- **Peak Load:** 5A at full power
+- **Why Isolated:** Audio amplifiers generate switching noise
+- **Recommended:** 12V 5A wall adapter or Mean Well equivalent
+- **Ground:** Connect to common ground with 5V supplies
+- **Wire Gauge:** 18 AWG adequate
+
+#### Dual Supply Wiring Diagram
+
+```text
+Supply 1 (5V 8A)              Supply 2 (5V 8A)              Supply 3 (12V 5A)
+     │                             │                              │
+     ├─→ Pico 2 (VBUS)             │                              │
+     ├─→ DFPlayer Mini             │                              │
+     ├─→ Logic Level Shifter       │                              │
+     │                             │                              │
+     ├─→ NeoPixels 1-150           ├─→ NeoPixels 151-300          │
+     │   (5V + GND)                │   (5V + GND only)            │
+     │   Data: GP16 → Pixel 1      │   Data flows through strip   │
+     │                             │                              │
+     └─→ Common GND ←──────────────┴──────────────────────────────┴─→ Amplifier
+                                                                       (12V + GND)
 ```
+
+**Critical Wiring Notes:**
+
+1. **Data Signal:** Pico GP16 → Pixel 1 → cascades to pixel 300
+   - Data connects ONLY at start (pixel 1)
+   - Do NOT inject data at midpoint
+2. **Power Injection Points:**
+   - Supply 1: Pixel 1 (start of strip)
+   - Supply 2: Pixel 150/151 (midpoint ~2.5m)
+   - Each supply provides 5V + GND to its segment
+3. **Common Ground:**
+   - Connect GND from all three supplies together
+   - Use single heavy wire (18 AWG) between supply GND terminals
+   - Ensures clean logic signals and prevents ground loops
+
+4. **Wire Runs:**
+   - Keep 5V wires short and thick (18 AWG)
+   - Minimize distance from supply to injection point
+   - Use stranded wire for flexibility
+
+#### Safety Considerations
+
+**Fusing:**
+
+- 10A fast-blow fuse on each 5V supply output
+- 5A fast-blow fuse on 12V supply output
+
+**Decoupling Capacitors:**
+
+- 1000µF 10V electrolytic at pixel 1 (Supply 1 injection point)
+- 1000µF 10V electrolytic at pixel 150 (Supply 2 injection point)
+- 100µF 10V electrolytic near Pico VBUS pin
+- 100µF 10V electrolytic near DFPlayer Mini VCC pin
+
+**Grounding:**
+
+- All grounds MUST be common for logic signals
+- Use star grounding topology (all grounds meet at one point)
+- Keep ground wires short and thick (18 AWG minimum)
+- If experiencing EMI/noise: use single-point ground connection to amplifier
+
+**Wire Selection:**
+
+- 18 AWG for all 5V power distribution (rated 10A)
+- 22 AWG for logic signals (3.3V, GPIO)
+- Use stranded wire for flexibility
+- Keep power wires as short as practical
+
+#### Multi-Board Deployment (3 Boards Total)
+
+**Total Power Requirements:**
+
+- 6× 5V 8A supplies (2 per board) = 48A at 5V (240W total)
+- 3× 12V 5A supplies (1 per board) = 15A at 12V (180W total)
+- **Combined: ~420W** for complete installation
+
+**Recommended Deployment:**
+
+- Each board has:
+  - 2× dedicated 5V 8A supplies (one per 150-pixel segment)
+  - 1× dedicated 12V 5A supply (amplifier)
+- Simplest deployment and troubleshooting
+- Each board is independent
+- **Total: 9 power supplies** (6× 5V + 3× 12V)
+
+**Per-Board Power Budget:**
+
+| Board   | Supply 1 (5V 8A)          | Supply 2 (5V 8A) | Supply 3 (12V 5A) | Total Power |
+| ------- | ------------------------- | ---------------- | ----------------- | ----------- |
+| Board 1 | Pico + MP3 + Pixels 1-150 | Pixels 151-300   | Amplifier         | ~140W       |
+| Board 2 | Pico + MP3 + Pixels 1-150 | Pixels 151-300   | Amplifier         | ~140W       |
+| Board 3 | Pico + MP3 + Pixels 1-150 | Pixels 151-300   | Amplifier         | ~140W       |
+
+**Alternative: Canaduino Breadboard Power Module**
+
+If using CANADUINO Breadboard Power Supply Module:
+
+- **Use for:** Pico 2 and DFPlayer Mini only
+- **Configuration:**
+  - One rail: 3.3V or 5V for Pico
+  - Other rail: 3.3V or 5V for MP3 module
+  - 12V rail: Not used (insufficient current for amplifier)
+- **Benefits:** Clean regulated power for logic circuits, USB-C input
+- **NeoPixel Power:** Still requires two dedicated 5V 8A supplies per board
+- **Total per board:** Canaduino (USB-C 2.1A) + 2× 5V 8A + 1× 12V 5A
+
+**Logic Level Shifter Consideration:**
+
+If using Canaduino with 3.3V rails:
+
+- **Option 1 (Recommended):** Omit logic level shifter, run NeoPixels with 3.3V data signal
+  - WS2812B will work reliably with 3.3V logic when powered at 5V
+  - Simplifies wiring, one less component
+  - Pico GP16 connects directly to NeoPixel DIN
+- **Option 2 (Original Design):** Keep logic level shifter
+  - Use Canaduino 5V rail as HV (high voltage) reference
+  - Use Canaduino 3.3V rail for Pico LV (low voltage)
+  - Maintains 5V data signal for maximum noise immunity
+
+**Pin Assignments (Replaced - See Table Above):**
+
+-
+
+## 5. Code Structure
+
+```text
 src/
 ├── boot.py              # Bootstrap script (runs on Pico startup)
 │                        # - Hardware initialization
@@ -625,6 +806,10 @@ audio/
     └── 0003.mp3         # Thunder sound 3
 ```
 
+> [!note]
+> Code style conventions and naming guidelines are maintained in AGENTS.md.
+> See [Code Style & Conventions](../AGENTS.md#code-style--conventions) for complete details.
+
 **Key Configuration Variables (main.py):**
 
 - `LED_COUNT = 300`: Number of NeoPixels
@@ -635,9 +820,7 @@ audio/
 - `MIN_INTERVAL = 60`: Minimum seconds between effects
 - `MAX_INTERVAL = 120`: Maximum seconds between effects
 
----
-
-## Testing & Debugging
+## 6. Testing & Debugging
 
 **Standalone NeoPixel Testing:**
 
@@ -669,115 +852,11 @@ MIN_INTERVAL = 5  # 5 seconds instead of 60
 MAX_INTERVAL = 10  # 10 seconds instead of 120
 ```
 
-**VS Code Debugging:**
-
-- Set breakpoints in code
-- Use integrated debugger (Pico extension supports debugging)
-- Monitor variables in real-time
-
----
-
-## DevOps Scripts & Tooling
+## 7. DevOps Scripts & Tooling
 
 **Host-Side Development Tools**
 
 The `devops/` directory contains Python scripts that run on your **host machine** (not on the Pico) to assist with development, testing, and deployment. These scripts require a Python virtual environment with dependencies installed.
-
-### Virtual Environment Setup
-
-**One-Time Setup:**
-
-```bash
-# Create virtual environment
-python3.13 -m venv venv
-
-# Activate it
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate   # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install development dependencies (optional)
-pip install -r requirements-dev.txt
-```
-
-**Daily Usage:**
-
-```bash
-# Quick activation
-source activate.sh
-
-# Or manual activation
-source venv/bin/activate
-
-# Run scripts (see below)
-python devops/prepare_audio.py
-
-# Deactivate when done
-deactivate
-```
-
-### Audio Preparation Script
-
-**Purpose:** Prepares audio files for the DFPlayer Mini MP3 module.
-
-**Script:** `devops/prepare_audio.py`
-
-**Features:**
-
-- Scans `audio/` directory for MP3 and WAV files
-- Converts WAV files to MP3 (requires ffmpeg and pydub)
-- Renames files to DFPlayer naming convention (0001.mp3, 0002.mp3, etc.)
-- Creates `audio/prepared/` directory ready for SD card
-- Dry-run mode to preview changes without modifying files
-
-**Usage:**
-
-```bash
-# Activate virtual environment
-source activate.sh
-
-# Preview changes without modifying files
-python devops/prepare_audio.py --dry-run
-
-# Process files and create audio/prepared/ directory
-python devops/prepare_audio.py
-
-# Custom source and output directories
-python devops/prepare_audio.py --source audio/raw --output audio/sdcard
-
-# Or use npm scripts
-npm run audio:prep:dry  # Dry run
-npm run audio:prep      # Process files
-```
-
-**Requirements:**
-
-- `pydub` Python package (for WAV conversion)
-- `ffmpeg` system package (for audio processing)
-
-**Installation:**
-
-```bash
-# Install Python package (already in requirements.txt)
-pip install pydub
-
-# Install ffmpeg
-sudo apt install ffmpeg  # Linux
-brew install ffmpeg      # Mac
-# Windows: Download from https://ffmpeg.org/download.html
-```
-
-**Output:**
-
-```
-audio/prepared/
-├── 0001.mp3  # First file alphabetically
-├── 0002.mp3  # Second file
-├── 0003.mp3  # Third file
-└── ...
-```
 
 **Critical Notes:**
 
@@ -786,7 +865,7 @@ audio/prepared/
 3. **Format SD card:** Use FAT32 format for compatibility
 4. **Test playback:** Verify track 1 plays the expected sound before deploying
 
-### MP3 Serial Communication Tester
+### 7.1. MP3 Serial Communication Tester
 
 **Purpose:** Interactive testing tool for DFPlayer Mini serial protocol.
 
@@ -799,36 +878,9 @@ audio/prepared/
 - Debug audio playback issues
 - Verify protocol implementation
 
-**Usage:**
-
-```bash
-# Activate virtual environment
-source activate.sh
-
-# Connect DFPlayer to USB-serial adapter, then:
-python devops/test_mp3_serial.py /dev/ttyUSB0  # Linux
-python devops/test_mp3_serial.py COM3          # Windows
-
-# Interactive commands:
-> p 1        # Play track 1 (0001.mp3)
-> p 2        # Play track 2 (0002.mp3)
-> v 25       # Set volume to 25 (range: 0-30)
-> pause      # Pause playback
-> resume     # Resume playback
-> stop       # Stop playback
-> reset      # Reset module
-> quit       # Exit tester
-```
-
-**Requirements:**
-
-- `pyserial` Python package (already in requirements.txt)
-- USB-to-serial adapter (FTDI, CP2102, etc.)
-- DFPlayer Mini module with MicroSD card inserted
-
 **Hardware Setup:**
 
-```
+```text
 USB-Serial Adapter      DFPlayer Mini
 -----------------       -------------
 TX (output)      →      RX (pin 2)
@@ -850,7 +902,7 @@ GND              ←→     GND
 
 Full protocol documentation: https://github.com/DFRobot/DFRobotDFPlayerMini
 
-### Python Code Quality Tools
+### 7.2. Python Code Quality Tools
 
 **Linting:**
 
@@ -884,44 +936,13 @@ npm run test:py
 # or: pytest
 ```
 
-**Configuration:**
-
-- All tools configured in `pyproject.toml`
-- `src/` and `lib/` excluded from linting (MicroPython code)
-- British/Canadian English spelling in comments and strings
-
-### Project Configuration Files
-
-**`pyproject.toml`**
-
-- Python project metadata (name, version, author)
-- Host-side dependencies (pyserial, pydub)
-- Development dependencies (pytest, black, ruff, mypy)
-- Tool configuration (black, ruff, mypy, pytest)
-- Excludes MicroPython code from linting
-
-**`requirements.txt`**
-
-- Runtime dependencies for devops scripts
-- `pyserial>=3.5` - Serial communication
-- `pydub>=0.25.1` - Audio processing
-
-**`requirements-dev.txt`**
-
-- Development dependencies
-- Testing: pytest, pytest-cov
-- Linting: ruff
-- Formatting: black
-- Type checking: mypy
-- Utilities: ipython
-
 **`package.json`**
 
 - Node.js dev dependencies (ESLint, Prettier)
 - NPM scripts for running Python tools
 - Used for documentation linting/formatting
 
-### Adding New DevOps Scripts
+### 7.3. Adding New DevOps Scripts
 
 When creating new helper scripts:
 
@@ -932,50 +953,6 @@ When creating new helper scripts:
 5. **Follow conventions:** British/Canadian English spelling
 6. **Document in Developer Guide:** Add usage documentation to this guide
 7. **Add npm script:** Add convenience script to `package.json`
-
-**Template:**
-
-```python
-#!/usr/bin/env python3
-"""
-Brief description of what this script does.
-
-Usage:
-    python devops/my_script.py --option value
-    python devops/my_script.py --help
-"""
-
-import argparse
-from pathlib import Path
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Script description"
-    )
-    parser.add_argument(
-        '--option',
-        type=str,
-        help='Option description'
-    )
-    args = parser.parse_args()
-
-    # Your code here...
-    print("Script executed successfully")
-    return 0
-
-
-if __name__ == '__main__':
-    exit(main())
-```
-
-### Deployment to Pico
-
-**VS Code Pico Extension (Recommended):**
-
-1. Right-click file in explorer → "Upload to Pico"
-2. Or: `Ctrl+Shift+P` → "Upload Project to Pico"
-3. Extension handles file transfer over USB serial
 
 **Manual Deployment (Alternative):**
 
@@ -994,9 +971,30 @@ mpremote cp src/mp3_player.py :mp3_player.py
 - ✅ Upload all required files (`boot.py`, `main.py`, `lights.py`, `mp3_player.py`)
 - ✅ Power cycle Pico to run from `boot.py`
 
----
+## 8. TODO List
 
-## Known Issues & Gotchas
+This is a high level todo list for now.
+
+- [ ] SD Cards
+  - [ ] Format as FAT32 x3
+  - [ ] Copy prepared audio files x3
+- [ ] Amplifier
+  - [ ] Solder connection blocks
+  - [ ] Connect female barrel jacks
+  - [ ] Connect to MP3 module audio out
+  - [ ] Connect to speaker input
+- [ ] defg
+- [ ] hijk
+
+4. [ ]
+
+## 9. Known Issues & Gotchas
+
+> [!note]
+> Hardware and protocol-level constraints are documented in AGENTS.md.
+> See [Known Limitations & Gotchas](../AGENTS.md#known-limitations--gotchas) for hardware-specific constraints.
+
+**This section tracks implementation-specific issues discovered during development:**
 
 1. **MP3 File Order:**
    - Files must be copied to SD card in specific order
@@ -1028,21 +1026,6 @@ mpremote cp src/mp3_player.py :mp3_player.py
    - Seed with `random.seed()` for better randomness
    - Consider using ADC noise for true random seed
 
----
-
-## Future Improvements
-
-**Planned Enhancements:**
-
-- Web-based configuration interface (Pico W variant)
-- Wireless synchronization between boards (optional)
-- Multiple lightning patterns (randomized animations)
-- Adjustable intensity based on time of night
-- Motion sensor integration for proximity triggering
-- Weather-resistant enclosure designs
-- Battery backup for power outages
-- Remote control via IR or RF
-
 **Code Quality:**
 
 - Add comprehensive error handling
@@ -1060,33 +1043,6 @@ mpremote cp src/mp3_player.py :mp3_player.py
 - Status LEDs for debugging
 - OLED display for configuration
 
----
-
-## Hardware References
-
-**Raspberry Pi Pico 2:**
-
-- Product page: https://www.raspberrypi.com/products/raspberry-pi-pico-2/
-- Datasheet: https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf
-- MicroPython docs: https://docs.micropython.org/en/latest/rp2/
-
-**MP3 Player Module:**
-
-- Purchase: https://www.universal-solder.ca/product/mini-mp3-player-module-with-microsd-slot-for-arduino-etc/
-- GitHub/Docs: https://github.com/DFRobot/DFRobotDFPlayerMini
-- Datasheet: https://wiki.dfrobot.com/DFPlayer_Mini_SKU_DFR0299
-
-**60W BTL Class D Amplifier:**
-
-- Purchase: https://www.amazon.ca/dp/B0D8HCV43H
-- Specifications: 60W output, 12V input, BTL configuration
-
-**WS2812B NeoPixels:**
-
-- Datasheet: https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf
-- Adafruit guide: https://learn.adafruit.com/adafruit-neopixel-uberguide
-
-**VS Code Pico Extension:**
-
-- Marketplace: https://marketplace.visualstudio.com/items?itemName=raspberry-pi.raspberry-pi-pico
-- Documentation: https://github.com/raspberrypi/pico-vscode
+> [!note]
+> Hardware component specifications, purchase links, datasheets, and resource documentation are maintained in AGENTS.md.
+> See [Hardware Resource Links](../AGENTS.md#hardware-resource-links) for complete details.

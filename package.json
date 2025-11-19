@@ -18,7 +18,12 @@
     "lint:py": "ruff check devops/",
     "format:py": "black devops/",
     "test:py": "pytest",
-    "type:py": "mypy devops/"
+    "type:py": "mypy devops/",
+    "serve": "devops/serve.sh",
+    "serve:stop": "devops/serve.sh --stop",
+    "run": "devops/run.sh",
+    "run:repl": "devops/run.sh --repl",
+    "deploy": "devops/deploy.sh"
   },
   "version": "2025.0.0",
   "devDependencies": {

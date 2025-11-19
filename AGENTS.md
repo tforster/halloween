@@ -1,11 +1,38 @@
-# AGENTS.md
+# AGENTS.md <!-- omit from toc -->
 
 > **Version:** 2025 season (Raspberry Pi Pico 2 + MP3 Player Module)  
 > **Previous versions:** [2024 (ESP32 + DAC)](https://github.com/tforster/halloween/tree/2024)
 
 This file provides context and instructions for AI coding agents working on the 2025 Halloween Lightning & Thunder Effect project.
 
-## Project Overview
+## Table of Contents <!-- omit from toc -->
+
+- [1. Project Overview](#1-project-overview)
+- [2. Essential Reading for AI Agents](#2-essential-reading-for-ai-agents)
+- [3. Development Environment](#3-development-environment)
+  - [3.1. Host System Setup](#31-host-system-setup)
+  - [3.2. Pico Development Tools](#32-pico-development-tools)
+  - [3.3. Project Setup](#33-project-setup)
+- [4. File Structure Context](#4-file-structure-context)
+- [5. Hardware Configuration](#5-hardware-configuration)
+  - [5.1. Hardware Components (3x sets)](#51-hardware-components-3x-sets)
+- [6. Code Style \& Conventions](#6-code-style--conventions)
+- [7. Common Development Tasks](#7-common-development-tasks)
+  - [7.1. Flashing MicroPython to Pico 2](#71-flashing-micropython-to-pico-2)
+  - [7.2. Uploading Files to Pico 2](#72-uploading-files-to-pico-2)
+  - [7.3. Preparing MP3 Files for SD Card](#73-preparing-mp3-files-for-sd-card)
+  - [7.4. Testing \& Debugging](#74-testing--debugging)
+- [8. Known Limitations \& Gotchas](#8-known-limitations--gotchas)
+- [9. Important Code Patterns](#9-important-code-patterns)
+  - [9.1. DFPlayer Mini Command Structure](#91-dfplayer-mini-command-structure)
+- [10. Future Development Notes](#10-future-development-notes)
+- [11. Git Workflow](#11-git-workflow)
+- [12. Security \& Safety](#12-security--safety)
+- [13. Hardware Resource Links](#13-hardware-resource-links)
+- [14. Questions to Ask Before Making Changes](#14-questions-to-ask-before-making-changes)
+- [15. When in Doubt](#15-when-in-doubt)
+
+## 1. Project Overview
 
 This is a Raspberry Pi Pico 2 + MicroPython project that creates synchronized lightning and thunder effects for Halloween displays. The system:
 
@@ -31,7 +58,7 @@ This is a Raspberry Pi Pico 2 + MicroPython project that creates synchronized li
 - **Triggering:** Manual only → Autonomous random intervals
 - **Scale:** 1 board → 3 independent boards
 
-## Essential Reading for AI Agents
+## 2. Essential Reading for AI Agents
 
 **⚠️ IMPORTANT: Before making any changes, read these documents:**
 
@@ -59,87 +86,63 @@ This is a Raspberry Pi Pico 2 + MicroPython project that creates synchronized li
 **Why read the Developer Guide?**
 
 - Contains complete context on **why** decisions were made (ADRs)
-- Explains the dual nature of this project: Pico code (`src/`) vs. host tools (`devops/`)
-- Documents all setup steps including virtual environments
-- Lists known issues and gotchas you need to be aware of
-- Provides testing strategies and debugging approaches
+- Documents all setup steps and daily workflow
+- Provides detailed testing strategies and debugging approaches
+- Tracks implementation-specific bugs and workarounds
+- Includes code patterns and configuration details
 
-**Quick Links:**
+**Why read AGENTS.md?**
+
+- Hardware specifications and purchase links
+- Code style conventions and naming guidelines
+- Common development procedures
+- Hardware/protocol constraints and limitations
+- Project structure and workflow
+
+**Quick Links to Developer Guide:**
 
 - [Development Environment Setup](docs/Developer-Guide.md#development-environment-setup)
 - [DevOps Scripts & Tooling](docs/Developer-Guide.md#devops-scripts--tooling)
 - [Testing & Debugging](docs/Developer-Guide.md#testing--debugging)
 - [Known Issues & Gotchas](docs/Developer-Guide.md#known-issues--gotchas)
 
-## Development Environment
+## 3. Development Environment
 
-### Host System Setup
+### 3.1. Host System Setup
 
 **Primary Development:**
 
-- OS: Linux (WSL2 on Windows)
+- System 1 OS: Linux (WSL2 on Windows)
+- System 2 OS: Debian 13 (ChromeOS with Linux development environment enabled)
 - Shell: zsh
-- Python: 3.13+ (for host tools, not deployed code)
-- Node.js: Latest LTS (npm for scripts)
-- VS Code with Raspberry Pi Pico extension
+- Node.js: Latest LTS (npm for devops scripts)
+- VS Code
 - Markdown All In One extension (auto-updates table of contents on save)
 
 **Key Difference from 2024:**
 
-- No longer using esptool, ampy, or mpremote
-- Official Raspberry Pi Pico extension handles all firmware and file operations
-- Integrated development experience in VS Code
+- No longer using esptool or ampy
 
 **Important VS Code Extensions:**
 
-1. **Raspberry Pi Pico** (raspberry-pi.raspberry-pi-pico)
-   - Handles MicroPython firmware flashing
-   - File upload to Pico
-   - Integrated REPL and debugging
-
-2. **Markdown All In One** (yzhang.markdown-all-in-one)
+1. **Markdown All In One** (yzhang.markdown-all-in-one)
    - Automatically generates and updates table of contents in Markdown files
    - Updates ToC on file save (no manual editing required)
    - Do NOT manually edit table of contents sections
 
-### Pico Development Tools
+### 3.2. Pico Development Tools
 
-**VS Code Pico Extension:**
+- mpremote is installed in Linux environment for Pico interaction.
+- `devops/deploy.sh` and `devops/run.sh` scripts use mpremote under the hood.
 
-```bash
-# Install from VS Code marketplace
-# Extension ID: raspberry-pi.raspberry-pi-pico
+### 3.3. Project Setup
 
-# Extension handles:
-# - MicroPython firmware flashing
-# - File upload to Pico
-# - Integrated REPL
-# - Debugging support
-```
+> [!note]
+>
+> Complete development environment setup instructions including prerequisites, dependencies, and daily workflow are maintained in the Developer Guide.
+> See [Development Environment Setup](docs/Developer-Guide.md#development-environment-setup) for detailed instructions.
 
-**Extension Setup:**
-
-1. Install "Raspberry Pi Pico" extension
-2. Connect Pico 2 via USB
-3. Press `Ctrl+Shift+P` → "MicroPython: Configure Project"
-4. Select "Raspberry Pi Pico 2"
-5. Extension auto-downloads and flashes MicroPython
-
-### Project Setup
-
-```bash
-# Clone repository
-git clone https://github.com/tforster/halloween.git
-cd halloween
-git checkout 2025
-
-# Install Node dependencies (if any)
-npm install
-
-# No Python virtual environment needed - code runs on Pico, not host
-```
-
-## File Structure Context
+## 4. File Structure Context
 
 ```shell
 /home/tforster/dev/TroyForster/Halloween/
@@ -154,6 +157,9 @@ npm install
 │   ├── 0001.mp3           # Thunder sound 1
 │   ├── 0002.mp3           # Thunder sound 2
 │   └── 0003.mp3           # Thunder sound 3
+├── devops/                 # Host-side development tools
+│   ├── prepare_audio.py   # MP3 file preparation script
+│   └── test_mp3_serial.py # Serial communication tester
 ├── docs/                   # Documentation
 │   ├── Developer-Guide.md  # Comprehensive technical documentation
 │   └── *.pdf              # Hardware references
@@ -163,21 +169,20 @@ npm install
 **Important:**
 
 - Files in `src/` are MicroPython code that runs ON the Pico
+- Files in `devops/` are mostly bash scripts that run on your HOST machine
 - Audio files go on the MicroSD card in the MP3 module, NOT on the Pico
-- Use VS Code Pico extension for uploading files
 
-## Hardware Configuration
+> [!note]
+> Detailed file structure with comprehensive explanations of each directory and file is maintained in the Developer Guide.
+> See [Project File Structure](docs/Developer-Guide.md#project-file-structure) for complete details.
 
-### Pico 2 Pin Assignments
+## 5. Hardware Configuration
 
-**To be determined during development (update main.py constants):**
+> [!note]
+> Pin assignments are determined during development and documented in the Developer Guide.
+> See [Hardware Assembly Notes](docs/Developer-Guide.md#hardware-assembly-notes) for current pin mappings.
 
-- GPIO X: NeoPixel data output (via 3.3V→5V logic level shifter)
-- GPIO X: MP3 module TX (serial communication)
-- GPIO X: MP3 module RX (serial communication)
-- GPIO X: Trigger input (optional - for manual override)
-
-### Hardware Components (3x sets)
+### 5.1. Hardware Components (3x sets)
 
 **Per Board:**
 
@@ -209,14 +214,19 @@ npm install
    - 5V supply for Pico + NeoPixels (5-6A minimum)
    - 12V supply for amplifier
 
-## Code Style & Conventions
+## 6. Code Style & Conventions
 
 **MicroPython Code (src/):**
 
-- Snake_case for functions and variables
+- camelCase for functions and variables
 - UPPER_CASE for constants (e.g., `LED_COUNT`, `LED_PIN`)
 - Minimal dependencies (memory constrained)
-- Comments for non-obvious behaviour
+- **Comprehensive inline code comments required:**
+  - Document hardware constraints and GPIO pin assignments
+  - Explain timing-critical sections (NeoPixel updates, UART delays)
+  - Document protocol implementations (DFPlayer command format, checksums)
+  - Explain non-obvious behaviour and workarounds
+  - Include references to datasheets/specs where applicable
 - No type hints (not supported in MicroPython)
 - Keep memory usage low - use buffers, avoid large data structures
 - Use British/Canadian English spelling (colour, initialise, synchronised, etc.)
@@ -224,6 +234,7 @@ npm install
 **DFPlayer Mini Communication:**
 
 - Protocol implementation in `mp3_player.py`
+  <!-- eslint-disable-next-line markdown/no-html-->
 - Command format: 7E FF 06 <CMD> 00 <DATA_HIGH> <DATA_LOW> <CHECKSUM> EF
 - Always add delays between commands (50-100ms)
 - Handle module initialisation delay (500ms after power-on)
@@ -232,12 +243,12 @@ npm install
 
 - PEP 8 style guide
 - Type hints preferred for host-side code
-- Use virtual environments for host tools
 - British/Canadian English spelling in comments and strings
 
 **Documentation:**
 
 - Markdown for all docs
+- Do not use `---` for horizontal rules (conflicts with current markdown stylesheet)
 - Keep README.md user-focused and concise
 - Technical details belong in docs/Developer-Guide.md
 - Use ADR format for architectural decisions
@@ -245,12 +256,11 @@ npm install
 - Markdown All In One extension automatically maintains table of contents
 - Do NOT manually edit ToC sections - they update automatically on save
 
-## Common Development Tasks
+## 7. Common Development Tasks
 
-### Flashing MicroPython to Pico 2
+### 7.1. Flashing MicroPython to Pico 2
 
 ```bash
-# VS Code Pico extension handles this automatically
 # Manual process:
 # 1. Hold BOOTSEL button on Pico 2
 # 2. Connect USB cable
@@ -261,19 +271,13 @@ npm install
 
 **Firmware Download:** https://micropython.org/download/RPI_PICO2/
 
-### Uploading Files to Pico 2
+### 7.2. Uploading Files to Pico 2
 
 ```bash
-# Using VS Code Pico Extension:
-# 1. Right-click file in explorer
-# 2. Select "Upload to Pico"
-# OR
-# 3. Ctrl+Shift+P → "Upload Project to Pico"
-
-# Files are transferred over USB serial
+devops/deploy.sh
 ```
 
-### Preparing MP3 Files for SD Card
+### 7.3. Preparing MP3 Files for SD Card
 
 ```bash
 # CRITICAL: File naming and order matter!
@@ -289,11 +293,10 @@ npm install
 # Pro tip: Format card, then copy files in order to avoid confusion
 ```
 
-### Testing & Debugging
+### 7.4. Testing & Debugging
 
 ```bash
-# Connect to REPL (VS Code integrated terminal)
-# Bottom panel shows Pico REPL automatically
+# Connect to REPL and test modules independently
 
 # Test NeoPixels
 >>> from lights import light_chaser
@@ -305,64 +308,13 @@ npm install
 >>> from mp3_player import MP3Player
 >>> player = MP3Player(tx_pin=X, rx_pin=X)
 >>> player.play_track(1)
-
-# Test random intervals (reduced for testing)
->>> import random
->>> random.randint(5, 10)  # Instead of 60-120
 ```
 
-### Standalone Module Testing
+> [!note]
+> Comprehensive testing procedures, debugging strategies, and detailed test cases are maintained in the Developer Guide.
+> See [Testing & Debugging](docs/Developer-Guide.md#testing--debugging) for complete details.
 
-```python
-# Test lights independently
-# Upload lights.py to Pico
-# In REPL: import lights
-
-# Test MP3 player independently
-# Upload mp3_player.py to Pico
-# In REPL: import mp3_player
-```
-
-## Testing Instructions
-
-**No automated tests currently exist.** Testing is manual:
-
-1. **NeoPixel Test:**
-   - Run `lights.py` standalone
-   - Should see light chaser pattern
-   - Verify all 300 pixels illuminate
-
-2. **MP3 Player Test:**
-   - Initialize player in REPL
-   - Send play command for track 1
-   - Verify audio output through amplifier
-   - Test volume control (0-30 range)
-
-3. **Random Interval Test:**
-   - Reduce MIN/MAX_INTERVAL to 5-10 seconds
-   - Verify effect triggers automatically
-   - Confirm no double-triggering (cooldown works)
-
-4. **Full System Test:**
-   - Upload all files
-   - Power on and wait for autonomous trigger
-   - Verify simultaneous lightning + thunder
-   - Test multiple cycles
-
-5. **Multi-Board Test:**
-   - Deploy code to all 3 Picos
-   - Power on all boards
-   - Verify independent operation (not synchronized)
-   - Confirm each board has different random intervals
-
-**Future Testing Needs:**
-
-- Unit tests for MP3 player protocol
-- Mock tests for UART communication
-- Integration tests for full effect cycle
-- Regression tests before deployment
-
-## Known Limitations & Gotchas
+## 8. Known Limitations & Gotchas
 
 1. **MP3 File Naming is CRITICAL:**
    - DFPlayer Mini expects specific format: 0001.mp3, 0002.mp3, etc.
@@ -386,25 +338,24 @@ npm install
    - Avoid blocking operations during updates
    - Logic level shifting still required (3.3V → 5V)
 
-5. **Random Number Generator:**
-   - MicroPython uses pseudo-random generator
-   - Seed with `random.seed()` for better randomness
-   - Consider ADC noise as seed source for true randomness
-
-6. **Power Supply Considerations:**
+5. **Power Supply Considerations:**
    - 300 NeoPixels at full white = 18A theoretical
    - Lightning effect uses ~30% = 5-6A typical
    - Amplifier can introduce noise on shared rails
    - Use separate power supplies for logic vs. amplifier
 
-7. **Multi-Board Deployment:**
+6. **Multi-Board Deployment:**
    - Must update code on all 3 boards individually
    - No centralized update mechanism
    - Test each board independently before final deployment
 
-## Important Code Patterns
+> [!note]
+> Implementation-specific bugs, workarounds, and development gotchas are tracked in the Developer Guide.
+> See [Known Issues & Gotchas](docs/Developer-Guide.md#known-issues--gotchas) for current implementation issues.
 
-### DFPlayer Mini Command Structure
+## 9. Important Code Patterns
+
+### 9.1. DFPlayer Mini Command Structure
 
 ```python
 # Command format (10 bytes):
@@ -424,77 +375,15 @@ cmd = bytearray([0x7E, 0xFF, 0x06, 0x03, 0x00, 0x00, 0x01, 0xFE, 0xF9, 0xEF])
 uart.write(cmd)
 ```
 
-### Batched NeoPixel Updates (from 2024)
+> [!note]
+> Implementation-specific code patterns and examples are maintained in the Developer Guide.
+> See [Code Structure](docs/Developer-Guide.md#code-structure) for detailed code patterns and configuration options.
 
-```python
-# Still using batched updates for performance
-for i in range(0, len(np), batch_size):
-    for j in range(batch_size):
-        if i + j < len(np):
-            np[i + j] = (240, 248, 255)
-    np.write()  # Single write for entire batch
-```
+> [!note]
+> Detailed migration notes from the 2024 ESP32 implementation are documented in the Developer Guide.
+> See [ADR-005: Migration from ESP32 to Raspberry Pi Pico 2](docs/Developer-Guide.md#adr-005-migration-from-esp32-to-raspberry-pi-pico-2-2025) for complete comparison and rationale.
 
-### Random Interval Triggering
-
-```python
-import random
-import time
-
-MIN_INTERVAL = 60
-MAX_INTERVAL = 120
-
-while True:
-    interval = random.randint(MIN_INTERVAL, MAX_INTERVAL)
-    time.sleep(interval)
-    trigger_effect()  # Play lightning + thunder
-    time.sleep(5)  # Cooldown period
-```
-
-## Configuration Changes
-
-To modify behavior, edit constants in `src/main.py`:
-
-```python
-LED_COUNT = 300           # Number of NeoPixels
-LED_PIN = X               # GPIO for LED data
-MP3_TX_PIN = X            # GPIO for MP3 module TX
-MP3_RX_PIN = X            # GPIO for MP3 module RX
-MIN_INTERVAL = 60         # Minimum seconds between effects
-MAX_INTERVAL = 120        # Maximum seconds between effects
-```
-
-To change animation speed, modify `lights.py`:
-
-```python
-light_chaser(np, wait_ms=2, batch_size=40)  # 2ms delay, 40-pixel batches
-```
-
-## Migration Notes from 2024
-
-**Major Changes:**
-
-- **No more WAV parsing:** MP3 module handles all audio decoding
-- **No more DAC management:** MP3 module has built-in DAC
-- **No more audio streaming:** Files stay on SD card
-- **New serial protocol:** Must implement DFPlayer Mini communication
-- **Different tooling:** VS Code Pico extension vs. esptool/ampy
-
-**Code Reusability:**
-
-- `lights.py` animation logic can be adapted (same NeoPixel library)
-- Threading approach replaced with simpler sequential execution
-- Boot process similar but simpler
-- Configuration constants similar structure
-
-**What's Gone:**
-
-- `parse_wav_header()` function - not needed
-- `play_audio()` function - replaced by MP3 player commands
-- Audio buffering logic - handled by hardware
-- Manual sample rate timing - handled by hardware
-
-## Future Development Notes
+## 10. Future Development Notes
 
 **2025 Season Goals:**
 
@@ -502,25 +391,8 @@ light_chaser(np, wait_ms=2, batch_size=40)  # 2ms delay, 40-pixel batches
 - ✅ Autonomous random triggering
 - ✅ Higher quality audio (MP3 vs. WAV)
 - ⏳ Multiple lightning patterns (stretch goal)
-- ⏳ Motion sensor integration (optional)
 
-**Code Quality Improvements Needed:**
-
-- Implement comprehensive error handling
-- Add MP3 player response validation
-- Create audio preparation script
-- Add retry logic for serial communication
-- Implement watchdog timer for reliability
-- Add status LED for troubleshooting
-
-**Hardware Improvements:**
-
-- Design PCB for cleaner assembly
-- 3D print enclosures for weather resistance
-- Add quick-disconnect connectors
-- Status display for configuration
-
-## Git Workflow
+## 11. Git Workflow
 
 **Current State:**
 
@@ -536,7 +408,7 @@ light_chaser(np, wait_ms=2, batch_size=40)  # 2ms delay, 40-pixel batches
 - Keep commits atomic and focused
 - End of 2025 season: Squash, merge to main, tag as `2025`
 
-## Security & Safety
+## 12. Security & Safety
 
 **Electrical Safety:**
 
@@ -553,7 +425,7 @@ light_chaser(np, wait_ms=2, batch_size=40)  # 2ms delay, 40-pixel batches
 - Audio files are static, no user uploads
 - GPIO inputs use pull-up/pull-down resistors
 
-## Hardware Resource Links
+## 13. Hardware Resource Links
 
 **Must-Reference Documentation:**
 
@@ -574,11 +446,7 @@ light_chaser(np, wait_ms=2, batch_size=40)  # 2ms delay, 40-pixel batches
 4. **WS2812B NeoPixels:**
    - Datasheet: https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf
 
-5. **VS Code Pico Extension:**
-   - Marketplace: https://marketplace.visualstudio.com/items?itemName=raspberry-pi.raspberry-pi-pico
-   - GitHub: https://github.com/raspberrypi/pico-vscode
-
-## Questions to Ask Before Making Changes
+## 14. Questions to Ask Before Making Changes
 
 1. **Will this work with DFPlayer Mini protocol?** (Check GitHub docs)
 2. **Does this affect serial timing?** (UART is sensitive to delays)
@@ -587,7 +455,7 @@ light_chaser(np, wait_ms=2, batch_size=40)  # 2ms delay, 40-pixel batches
 5. **Will this affect NeoPixel timing?** (Still timing-critical)
 6. **Is this testable without full hardware?** (Plan for mocking)
 
-## When in Doubt
+## 15. When in Doubt
 
 1. Read the `docs/Developer-Guide.md` for architectural context
 2. Check DFPlayer Mini GitHub for protocol details: https://github.com/DFRobot/DFRobotDFPlayerMini
