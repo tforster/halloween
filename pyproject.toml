@@ -1,0 +1,113 @@
+[project]
+name = "halloween"
+version = "2025.0.0"
+description = "Halloween Lightning & Thunder Effect - Raspberry Pi Pico 2 controller with synchronised LED and audio effects"
+authors = [
+    {name = "Troy Forster", email = "troy.forster@gmail.com"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.13"
+keywords = ["halloween", "micropython", "raspberry-pi-pico", "neopixel", "audio-effects"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Home Automation",
+    "Topic :: Multimedia :: Sound/Audio",
+]
+
+# Dependencies for HOST-SIDE tools only (devops/ scripts)
+# Note: MicroPython code in src/ has NO dependencies (runs on Pico)
+dependencies = [
+    "pyserial>=3.5",      # Serial communication with Pico
+    "pydub>=0.25.1",      # Audio file processing (MP3/WAV)
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",      # Testing framework
+    "pytest-cov>=4.1.0",  # Code coverage
+    "black>=24.0.0",      # Code formatting
+    "ruff>=0.6.0",        # Fast linting
+    "mypy>=1.11.0",       # Type checking
+]
+
+[project.urls]
+Homepage = "https://github.com/tforster/halloween"
+Repository = "https://github.com/tforster/halloween.git"
+Issues = "https://github.com/tforster/halloween/issues"
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+# Don't try to package src/ - it's MicroPython code for the Pico
+packages = []
+
+[tool.black]
+line-length = 100
+target-version = ['py313']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | node_modules
+  | src
+  | lib
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = [
+    "src",      # MicroPython code (no type hints)
+    "lib",      # MicroPython libraries
+    ".venv",
+    "venv",
+    "node_modules",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # Line too long (black handles this)
+]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+exclude = [
+    'src/',      # MicroPython code
+    'lib/',      # MicroPython libraries
+    '.venv/',
+    'venv/',
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--cov=devops",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+]

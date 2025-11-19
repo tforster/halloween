@@ -1,0 +1,25 @@
+# Shopping List (Halloween 2025)
+
+This document contains a curated bill-of-materials (BOM) for the Raspberry Pi Pico 2 + DFPlayer Mini + 300 NeoPixel installation (3 boards).
+
+Add quantities to your Amazon.ca cart using the product search terms and links below. I wasn't able to automate adding items to your cart due to MCP/Chromium connectivity, so this file is prepared for manual review and checkout.
+
+## Summary (Per Board)
+
+- 2 × 5V 8–10A power supplies (one per 150-pixel segment)
+  - https://www.amazon.ca/Henxlco-AC100-240V-Converter-Transformer-Light%EF%BC%8CCCTV/dp/B0DYHCD21G/ref=sr_1_4?dib=eyJ2IjoiMSJ9.OpHAzrqT-as5LWzbf8MWLGU3NyAok82B4c17DSBreTDkVLWnjqBzT2BzpiOlxL8dsFwpkQ9SWF0lnogDexoskRlZjS5CUZf0BmY4fDR0YFBXuxd6cvbZFmTuMeI3XHxDWsOIQUwnXHFy3LkVbb0noQ_SUnqlg7Dk-33KyGOddgq7ORmtaOqTuIvJqdH6IvCiql7772efDi877sWy1UdckPjFR9M8fCnmst5AoRi1GimmFudOhWR92uOvDdVnqWtCEXayCBDzbJr4U6EQZhq3PTydv2PTJOO9o7Us25UCX8Q.GglpDzNFzU7Fnvo3gVobhD7Hq9brbuhyNrS3Mv1ljkw&dib_tag=se&keywords=5V+8A+power+supply+5.5x2.1mm&qid=1760822102&refinements=p_n_g-1003522887111%3A41930195011&rnid=41927744011&s=electronics&sr=1-4
+- 1 × 12V 5A power supply (amplifier)
+  - https://www.amazon.ca/ALITOVE-Adapter-Converter-100-240V-5-5x2-1mm/dp/B01GEA8PQA/ref=pd_ci_mcx_di_int_sccai_cn_d_sccl_2_3/142-9566673-0801906?pd_rd_w=3J6xC&content-id=amzn1.sym.d6674fdf-bd00-4d07-8317-6dfd6c498cdf&pf_rd_p=d6674fdf-bd00-4d07-8317-6dfd6c498cdf&pf_rd_r=8TJTF62MH4C3S7J3ABWS&pd_rd_wg=QA0lw&pd_rd_r=28e3ce96-a264-4918-96c2-ea46fa0d0f8c&pd_rd_i=B01GEA8PQA&th=1
+- Barrel jack to screw terminal adapters (female) — 2 per board for NeoPixels
+  - https://www.amazon.ca/20-Connectors-Terminal-Adapter-Security/dp/B0BHYTRP1M/ref=sr_1_1_sspa?dib=eyJ2IjoiMSJ9.GZQi9W0_vuNk5dvJ9kyEaE79eQUcHhQ-gVXTlo6VyKl5jovbRskOiUgse8YIt_eUcCi6o0xE6wKdkqzKQaMAljZNeOqA4Smc6hAYIJ4DbCfRX9qbHk6zO-2DOlUhctBf12fd-vZaP5IhAVVpyYtieXrDRwgnHdlakFtTxF2hf4Q-Lval1dBV3hBBMWIeaq8RHEcl95s98-ezaupXROr4vhuoH66rRL5QMdGLwFMvNFdxRWzhQmFSme5_e4xl0JcuLrzSQSO6CN7anRm5-UtSbRVbwXSfq_6G7KnlUnfL3VE.-0YX2wkqWo3wywmfZgNaurXc8sVLup5v7sjdEPSq1Zo&dib_tag=se&keywords=female%2Bbarrel%2Bjack%2Bscrew%2Bterminal&qid=1760824452&sr=8-1-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&th=1
+- Barrel jack (PCB-mount male) — 1 per amp
+- 2-position green screw terminal blocks (amplifier input & speaker output)
+  - [— 2 per amp](https://www.amazon.ca/Tnisesm-60pcs-Terminal-Connector-TN-T03G/dp/B088LSS14J/ref=sr_1_5?crid=953W9RWL17KL&dib=eyJ2IjoiMSJ9.nh2aP-YhPxqOMGv2LYBdNNJymUZReCurvLrm-FH6AT28wAfpCPb5fyc9ZOLaurxrHBQ2zSKH6fA9K4H7OKKTpUW0ieO_mBh1GT6Zwd6tHdm9eDImwgFlDMR0fhFIg3yd--gWTOwRScvfwLlwI9VsVP-5cJ-h_9P-BetmE9RdeaY4V8V2dfP5XxtzkyKBo7FEC2hBmw8mMqgmSztC_MxMZMzJKzKAc1t9_ogRXlTblWaKO5PgQqP9KRfOko7nB9tyVgzuzJEdz9zXaYgCD4qxfQklqtQ06fELZG-1K4hgnKw.NeqOfCchfH_u0FF3Rj_2WjsoyEZyFtHLZ7RB9RoK2ys&dib_tag=se&keywords=green+screw+terminal+block&qid=1760824968&sprefix=green+screw+terminal+block%2Caps%2C103&sr=8-5)
+- 18 AWG silicone stranded wire (red + black) — 10 m total
+  - https://www.amazon.ca/Electrical-SCHDRA-UL1007-Tinned-Copper/dp/B0C7T5H9DP/ref=sr_1_1_sspa?crid=2UI73CVBD0CEE&dib=eyJ2IjoiMSJ9.ogCgWOGYV1QFHbdlnyOSOngjhLJQybVhoUgOj3peD9njBSqKODeNyPg_llq-al2136KPFOGcf5LsiIn66O5N1WR_jMKXLdGVMFOFusc6mMQ7oOLyj0NbBaT_wGR7QRqyZawtwcATPYh-w-gl3pWHctcS8dMzCBLYD4KIesoKU4JwuXQMvj4iVrwHiXlV-aGP1cSOZK49RIznY5VFEVVj5-_GoZkDot9w3ZzLVbOC1A0Mn40zqD7nA-x_vioVucnyWk-T_GoAhW1jH8sS-reyPDHzw2v5aUkA05-iGEsaL4c.2RTsxAMWkhs_4RYWjKMrEjjpPsz1Qs6G6LY7Bc2cV08&dib_tag=se&keywords=18%2BAWG%2Bsilicone%2Bstranded%2Bwire%2B10%2Bmeters&qid=1760825208&sprefix=18%2Bawg%2Bsilicone%2Bstranded%2Bwire%2B10%2Bmeters%2Caps%2C138&sr=8-1-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&th=1
+- ## 18 AWG ferrules — 30 pcs
+- 10A fuses (inline or fuse holder) — 6 pcs (one per 5V supply)
+- 5A fuses — 3 pcs (one per 12V supply)
+  - https://www.amazon.ca/5x20mm-Holder-Inline-150pcs-Assorted/dp/B07F8RLMPB/ref=sr_1_48?crid=31LMM6KJZ30H7&dib=eyJ2IjoiMSJ9.Hr5zZgYCNzF6u5IX_cLPf9WXKbY9rnenNJ1gMITuJ-bEc3vyJN_Zd-9NPF07131LGwGK3pmX2mkdVdxO8wn-wZ78fTwEMz0Qx3XkQA4vDKrAmOY4KSQVnI9htP-daMJ9UUVwra0Y5iWzM31RUSn6qenGYiLpvYOTkoIl9U_FaS0h5ewQZEMMQcG4nZyEsTZCAEcmxWNWS0_K5qg4oRJ1iFDbaRkYY4Wh53SnbAt78WnwkacB_rryd-6FIbsGjvH1nr0cqfztsyNpkYhPb9kj7_zAqYmOjn-oAWbUpO_d0G0.t0Def6zYWmTChist4KT0KvpQmE3-CjEYPEOcSuRiBTQ&dib_tag=se&keywords=10%2Ba%2Binline%2Bfuse&qid=1760826025&sprefix=10%2Ba%2Binline%2Bfuse%2Caps%2C103&sr=8-48&th=1
+- Heat shrink kit
+  - https://www.amazon.ca/ASHINER-Heat-Shrink-Tubing-User-Friendly/dp/B08XXGNJHG/ref=sr_1_1_sspa?crid=VM4FAJ8I8SJZ&dib=eyJ2IjoiMSJ9.9x_Ri9Pg1YZbzZVH4EA65K-rWmFdflcq6fNWUWivLcok89VwWkC6OR2JYiP82i54q9JDUqrkGtYo_-G9bpTVrJ6OVMyGwysNFynNbCg2cfYN4xvFOt8mCVfnN05zgKOU2QWrHzvajWp5tvd7Aw_nlZnMS27is6iyWKLKutzBJkeshd91UL_n66gyWuCma734nm_PsOjCUbv-zmK6NWcO-q-lZOnU1m5cZ6lHyNCgc1bh2jNN_NoQ_bzyiVtVgRruzLe_-tvuYL8JK3qBldB9Brvt6vUteFt7GmLxhlblKh8.pUuJFncmFelUvjcnF2NdYjeJrYOBnJDhOroYGGV7J-g&dib_tag=se&keywords=heat%2Bshrink%2Bkit&qid=1760826415&sprefix=heat%2Bshrink%2Bkit%2Caps%2C122&sr=8-1-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&th=1

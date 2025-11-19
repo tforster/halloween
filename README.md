@@ -1,177 +1,111 @@
-# Halloween Lightning & Thunder Effect <!-- omit in toc -->
+# Halloween Lightning & Thunder Effect
 
-An ESP32-based Halloween display controller that creates synchronized lightning and thunder effects using NeoPixel LED strips and amplified audio. This project was built to enhance a neighbor's annual Halloween front-yard display with a dramatic weather effect on a 12-foot display board.
+> **📦 Looking for the 2024 ESP32 version?**  
+> This is the **2025 implementation** using Raspberry Pi Pico 2. For the original ESP32-based system with built-in DAC audio, see the [`2024` tag](https://github.com/tforster/halloween/tree/2024).
 
-## Table of Contents <!-- omit in toc -->
+A Raspberry Pi Pico 2-based Halloween display controller that creates synchronised lightning and thunder effects using NeoPixel LED strips and high-quality MP3 audio playback.
 
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Hardware Requirements](#hardware-requirements)
-  - [Installation](#installation)
-- [Usage](#usage)
-- [High Level Architecture Overview](#high-level-architecture-overview)
-- [Policies](#policies)
-- [Authors](#authors)
-- [License](#license)
+**Key Features:**
 
-## Getting Started
+- 🎵 High-quality MP3 audio via dedicated hardware module
+- ⚡ 300+ NeoPixel LED lightning animations
+- 🎲 Autonomous random triggering (60-120 second intervals)
+- 📦 Multi-board deployment (3 independent units)
 
-This project uses an ESP32 microcontroller running MicroPython to orchestrate a Halloween lightning and thunder effect. When triggered (via a switch or touch sensor), the system simultaneously:
+**For detailed technical documentation, see [Developer Guide](docs/Developer-Guide.md)**
 
-1. **Plays a lightning animation** across 300+ NeoPixel LEDs in a rapid "chaser" pattern
-2. **Plays thunder sound effects** through a DAC (Digital-to-Analog Converter) connected to an amplifier and speakers
+## Quick Start
 
-The effect runs in parallel using threading, creating a convincing lightning strike with accompanying thunder. When mounted on a tall black board, it's surprisingly effective at creating an ominous atmosphere.
+### What You Need
 
-### Prerequisites
+**Hardware:**
 
-**Development Environment:**
+- Raspberry Pi Pico 2
+- Mini MP3 Player Module ([Universal Solder](https://www.universal-solder.ca/product/mini-mp3-player-module-with-microsd-slot-for-arduino-etc/))
+- 60W BTL Amplifier ([Amazon](https://www.amazon.ca/dp/B0D8HCV43H))
+- 300+ WS2812B NeoPixel LED strip
+- Logic level shifter (3.3V→5V)
+- Power supplies (5V 6A, 12V for amplifier)
 
-- VS Code with Python extension
-- [Thonny IDE](https://thonny.org/) (useful for MicroPython development)
-- Python 3.13+ (for development tools)
-- Node.js/npm (latest LTS version)
-- Git client
+**Software:**
 
-**Python Tools & Packages:**
+- VS Code with [Raspberry Pi Pico extension](https://marketplace.visualstudio.com/items?itemName=raspberry-pi.raspberry-pi-pico)
+- Python 3.13+
+- Node.js/npm
 
-```bash
-# Install ESPtool for flashing firmware
-pip3.13 install esptool
-
-# Install ampy for file transfer
-pip install adafruit-ampy
-
-# Install mpremote for MicroPython REPL
-pip install mpremote
-```
-
-**MicroPython Firmware:**
-
-- Download the latest ESP32 firmware from [micropython.org](https://micropython.org/download/ESP32_GENERIC/)
-
-### Hardware Requirements
-
-- **ESP32 development board** (ESP32-WROOM recommended, see `docs/Freenove_ESP32_WROOM_Board_Pinout.pdf`)
-- **300+ WS2812B/NeoPixel LED strip** (or adjust `LED_COUNT` in code)
-- **Logic level shifter** (3.3V to 5V for NeoPixel data line)
-- **Audio amplifier** with speaker(s)
-- **Power supplies:**
-  - 5V supply for ESP32 and NeoPixels (ensure adequate amperage for LED count)
-  - 12V supply for amplifier
-- **Trigger mechanism** (switch, touch sensor, or PIR motion sensor)
-- **Breadboard and jumper wires** for prototyping
-
-**Pin Connections (configurable in `main.py`):**
-
-- GPIO 14: NeoPixel data (via logic level shifter)
-- GPIO 26: DAC output to amplifier
-- GPIO 5: Switch/trigger input
+> 📖 **Full hardware details and assembly:** [Developer Guide - Hardware Assembly](docs/Developer-Guide.md#hardware-assembly-notes)
 
 ### Installation
 
-1. **Clone the repository:**
+```bash
+# 1. Clone and setup
+git clone https://github.com/tforster/halloween.git
+cd halloween
+git checkout 2025
+npm install
 
-   ```bash
-   git clone https://github.com/tforster/halloween.git
-   cd halloween
-   ```
+# 2. Setup Python environment
+python3.13 -m venv venv
+source venv/bin/activate  # or: source activate.sh
+pip install -r requirements.txt
 
-2. **Install Node dependencies:**
+# 3. Configure VS Code
+# Install Raspberry Pi Pico extension
+# Press Ctrl+Shift+P → "MicroPython: Configure Project"
+# Select "Raspberry Pi Pico 2"
 
-   ```bash
-   npm install
-   ```
+# 4. Prepare audio files
+python devops/prepare_audio.py
+# Copy audio/prepared/*.mp3 to MicroSD card
 
-3. **Flash MicroPython firmware to ESP32:**
+# 5. Upload to Pico
+# Right-click src/ folder → "Upload to Pico"
+```
 
-   ```bash
-   # Erase existing flash
-   esptool.py --port /dev/ttyUSB0 erase_flash
-
-   # Flash MicroPython firmware (adjust path to your downloaded .bin file)
-   python -m esptool --chip esp32 --port /dev/ttyUSB0 --baud 460800 write_flash -z 0x1000 ESP32_GENERIC-20240602-v1.23.0.bin
-   ```
-
-4. **Upload project files to ESP32:**
-
-   ```bash
-   # Using ampy
-   ampy --port /dev/ttyUSB0 put src/boot.py
-   ampy --port /dev/ttyUSB0 put src/main.py
-   ampy --port /dev/ttyUSB0 put lib/neopixel.py
-
-   # Upload audio file
-   ampy --port /dev/ttyUSB0 mkdir audio
-   ampy --port /dev/ttyUSB0 put audio/Storm_exclamation.wav audio/Storm_exclamation.wav
-   ```
-
-5. **Connect to the device for testing:**
-   ```bash
-   # Using mpremote
-   mpremote connect /dev/ttyUSB0
-   ```
+> 📖 **Detailed setup instructions:** [Developer Guide - Development Environment Setup](docs/Developer-Guide.md#development-environment-setup)
 
 ## Usage
 
-Once deployed, the system operates autonomously:
+**Autonomous Mode** (default): System automatically triggers lightning and thunder effects every 60-120 seconds.
 
-1. **Power on** the ESP32 and connected hardware
-2. The system boots and enters **standby mode**, monitoring the trigger input
-3. When the trigger is activated (switch pressed, touch detected, etc.):
-   - Lightning animation plays across the LED strip (300 pixels in ~2ms batches)
-   - Thunder sound plays through the amplifier simultaneously
-   - System enters a 5-second cooldown before accepting the next trigger
-4. **Repeat** for continuous operation throughout your Halloween display
+**Triggered Mode** (optional): Connect a switch/sensor to trigger effects manually.
 
-**Development & Testing:**
+> 📖 **Configuration, testing, and debugging:** [Developer Guide - Testing & Debugging](docs/Developer-Guide.md#testing--debugging)
 
-- Use `src/lights.py` to test the LED animation independently
-- Use `src/test.py` for standalone testing
-- Modify configuration constants in `src/main.py` (LED_COUNT, pin assignments, timing)
+## Architecture
 
-## High Level Architecture Overview
+**System Components:**
 
-**Components:**
+- `src/boot.py` - Bootstrap loader
+- `src/main.py` - Main application with random triggering
+- `src/lights.py` - NeoPixel lightning animations
+- `src/mp3_player.py` - DFPlayer Mini serial interface
 
-1. **boot.py**: Bootstrap script that runs on ESP32 startup. Checks for and executes `main.py`.
+**Host Tools:**
 
-2. **main.py**: Main application logic featuring:
+- `devops/prepare_audio.py` - Prepare MP3 files for DFPlayer
+- `devops/test_mp3_serial.py` - Test MP3 module communication
 
-   - Multi-threaded execution (separate threads for audio and lights)
-   - WAV file parsing and playback via DAC
-   - Trigger detection and cooldown management
-   - Configuration parameters (pin assignments, LED count)
+> 📖 **Complete architecture and ADRs:** [Developer Guide - Architecture Decision Records](docs/Developer-Guide.md#architecture-decision-records-adrs)
 
-3. **lights.py**: NeoPixel animation module with:
+## Documentation
 
-   - Light chaser effect (batched updates for performance)
-   - LED initialization and cleanup functions
-   - Standalone testing capability
+- **[Developer Guide](docs/Developer-Guide.md)** - Complete technical documentation
+  - Architecture Decision Records (ADRs)
+  - Setup and configuration
+  - Hardware assembly
+  - DevOps tools
+  - Testing and debugging
+  - Known issues
+- **[AGENTS.md](AGENTS.md)** - AI agent context and conventions
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history
 
-4. **neopixel.py**: MicroPython NeoPixel driver library
+## Contributing
 
-**Audio Subsystem:**
-
-- Parses WAV file headers to extract sample rate and format
-- Streams audio data from flash storage to DAC output
-- Buffered playback (128-byte buffer) for memory efficiency
-- Configurable volume control
-
-**LED Subsystem:**
-
-- Batch updates (default: 40 pixels at a time) for faster animation
-- White flash color (240, 248, 255 RGB) for lightning effect
-- ~2ms delay between batches for flicker effect
-
-**Concurrency:**
-
-- Threading via `_thread` module allows simultaneous audio and visual effects
-- Thread-safe flags (`audio_playing`, `light_playing`) prevent overlapping triggers
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Policies
 
-- [Changelog](CHANGELOG.md) - Project changes and version history
 - [Code of Conduct](CODE_OF_CONDUCT.md) - Community guidelines
 - [Contributing](CONTRIBUTING.md) - How to contribute to this project
 
@@ -183,8 +117,6 @@ Once deployed, the system operates autonomously:
 - GitHub: [@tforster](https://github.com/tforster)
 - Website: [https://www.tforster.com](https://www.tforster.com)
 
-## License
+## Licence
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+This project is licensed under the MIT Licence.

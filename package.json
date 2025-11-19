@@ -3,7 +3,7 @@
   "bugs": {
     "url": "https://github.com/tforster/halloween/issues"
   },
-  "description": "Effects for Halloween 2024.",
+  "description": "Halloween Lightning & Thunder Effect - Raspberry Pi Pico 2 with synchronised LED and audio effects",
   "homepage": "https://github.com/tforster/halloween#readme",
   "license": "MIT",
   "name": "@tforster/halloween",
@@ -12,7 +12,32 @@
     "url": "git+https://github.com/tforster/halloween.git"
   },
   "scripts": {
-    "thonny": "python3.13 /home/tforster/.local/lib/python3.13/site-packages/thonny "
+    "thonny": "python3.13 /home/tforster/.local/lib/python3.13/site-packages/thonny ",
+    "audio:prep": "python devops/prepare_audio.py",
+    "audio:prep:dry": "python devops/prepare_audio.py --dry-run",
+    "lint:py": "ruff check devops/",
+    "format:py": "black devops/",
+    "test:py": "pytest",
+    "type:py": "mypy devops/",
+    "serve": "devops/serve.sh",
+    "serve:stop": "devops/serve.sh --stop",
+    "run": "devops/run.sh",
+    "run:repl": "devops/run.sh --repl",
+    "deploy": "devops/deploy.sh"
   },
-  "version": "2024.0.0"
+  "version": "2025.0.0",
+  "devDependencies": {
+    "@eslint/compat": "^1.2.9",
+    "@eslint/css": "^0.8.1",
+    "@eslint/js": "^9.27.0",
+    "@eslint/json": "^0.12.0",
+    "@eslint/markdown": "^6.4.0",
+    "eslint": "^9.27.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-html": "^8.1.3",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^5.4.0",
+    "prettier": "^3.5.3"
+  }
 }
