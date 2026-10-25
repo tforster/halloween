@@ -299,12 +299,15 @@ def test_ac7_a_press_while_every_rig_is_striking_is_ignored():
     assert len(uart.plays()) == 1
 
 
-def test_ac7_a_rig_timer_firing_during_a_manual_strike_does_not_start_a_second_pattern():
+def test_ac7_a_rig_timer_firing_during_a_manual_strike_waits_a_fresh_interval_after_it():
     storm, clock, [strip], uart = makeStorm([rigConfig("A", (1, 1))])
     button = FakeButton()
 
-    # The press strikes at ~900 ms; the rig's own 1 s timer fires mid-strike and must skip
-    runFor(storm, clock, 1_800, storm.watchTrigger(button), press(clock, button, 900, holdMs=50))
+    # The press strikes at ~900 ms; the rig's own 1 s timer fires mid-strike. It must neither
+    # start a second pattern on the strip nor strike sooner than 1 s after the manual strike ends
+    runFor(storm, clock, 3_000, storm.watchTrigger(button), press(clock, button, 900, holdMs=50))
 
-    assert len(uart.plays()) == 1
-    assert len(strip.strikes()) == 1
+    strikes = strip.strikes()
+    assert len(strikes) == 2
+    assert len(uart.plays()) == 2
+    assert strikes[1][0] - strikes[0][1] >= 1_000

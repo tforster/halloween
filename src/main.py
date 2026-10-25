@@ -51,6 +51,9 @@ TRIGGER_PIN = 15         # Button to 3.3 V; internal pull-down holds it low when
 USE_MANUAL_TRIGGER = False
 TRIGGER_POLL_MS = 50     # Poll period; also debounces, as contact bounce settles within it
 
+# How often a rig whose timer fired mid-strike checks whether the strike has ended
+FRAME_POLL_MS = 10
+
 # Status LED (onboard Pico LED)
 STATUS_LED_PIN = 25
 
@@ -61,14 +64,14 @@ STATUS_LED_PIN = 25
 
 
 class Rig:
-    """One strip and its strike interval. busy is set while a strike is animating."""
+    """One strip and its strike interval. isBusy is set while a strike is animating."""
 
     def __init__(self, name, strip, intervalS):
         self.name = name
         self.strip = strip
         self.minMs = intervalS[0] * 1000
         self.maxMs = intervalS[1] * 1000
-        self.busy = False
+        self.isBusy = False
         self.manualStrike = None
 
 
@@ -116,7 +119,7 @@ class Thunder:
             self._send(track)
         else:
             self.pendingTrack = track
-            # Kept on self so the task is not garbage-collected while it sleeps
+            # Held here because CPython (the host tests) keeps only a weak reference to tasks
             self.sender = asyncio.create_task(self._sendAfter(wait))
 
     async def _sendAfter(self, wait):
@@ -144,9 +147,13 @@ class Storm:
     async def _runRig(self, rig):
         while True:
             await self.clock.sleep(self.rng.randint(rig.minMs, rig.maxMs))
-            # A manual strike may already be running on this rig; skip rather than garble it
-            if not rig.busy:
-                await self.strike(rig)
+            if rig.isBusy:
+                # A manual strike is running on this rig. Striking now would garble it, so wait
+                # for it to end and start a fresh interval from there, as after any strike
+                while rig.isBusy:
+                    await self.clock.sleep(FRAME_POLL_MS)
+                continue
+            await self.strike(rig)
 
     async def watchTrigger(self, button):
         """
@@ -158,24 +165,25 @@ class Storm:
         while True:
             isPressed = button.value() == 1
             if isPressed and not wasPressed:
-                idle = [rig for rig in self.rigs if not rig.busy]
+                idle = [rig for rig in self.rigs if not rig.isBusy]
                 if idle:
                     rig = idle[self.rng.randint(0, len(idle) - 1)]
-                    # Mark busy now, not when the task first runs, so a second press can't pick it
-                    rig.busy = True
-                    # Kept on the rig so the task is not garbage-collected mid-strike
+                    # Mark it busy now, before the task runs, so a second press can't pick it
+                    rig.isBusy = True
+                    # MicroPython's scheduler holds running tasks, but CPython (the host tests) keeps
+                    # only a weak reference, so the rig holds it until the strike ends
                     rig.manualStrike = asyncio.create_task(self.strike(rig))
             wasPressed = isPressed
             await self.clock.sleep(TRIGGER_POLL_MS)
 
     async def strike(self, rig):
-        rig.busy = True
+        rig.isBusy = True
         try:
             print("⚡ Rig", rig.name, "strikes")
             self.thunder.strike()
             await executeRandomLightning(rig.strip, self.clock, self.rng)
         finally:
-            rig.busy = False
+            rig.isBusy = False
 
 
 async def heartbeat(led, clock):
@@ -244,6 +252,7 @@ def start():
         for rig in rigs:
             rig.strip.fill((0, 0, 0))
             rig.strip.write()
+        time.sleep_ms(CMD_DELAY_MS)  # A play may have gone out just before the interrupt
         player.stop()
         led.off()
 

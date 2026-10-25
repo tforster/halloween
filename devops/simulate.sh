@@ -22,6 +22,7 @@ set -o errexit
 set -o nounset
 # Fails entire pipeline if any command fails
 set -euo pipefail
+trap 'echo "Exit status $? at line $LINENO from: $BASH_COMMAND"' ERR
 
 # Include the parseArgs function
 source ./devops/includes/parseArgs.sh

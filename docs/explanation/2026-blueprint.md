@@ -114,7 +114,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
   - Nothing below start-up imports hardware modules, so the same logic runs under host Python with fakes.
 - **DFPlayer protocol:** the existing MP3 player module is kept. Its public interface (play track, set volume, stop) does not change; its constructor now takes the UART instead of pins. It prints each frame it sends, which stands in for the DFPlayer in simulation.
 - **Start-up:** autonomous start on boot stays on by default. A reduced-interval test mode is a configuration switch, not an edit to the interval constants.
-- **Manual trigger:** when enabled, a press fires one strike on a randomly chosen idle rig, going through the same strike path as a timer. It fires on the press edge (a 50 ms poll that also debounces), a press while every rig is striking is ignored, and rig timers are not reset. A rig's timer that fires during a manual strike on it is skipped.
+- **Manual trigger:** when enabled, a press fires one strike on a randomly chosen idle rig, going through the same strike path as a timer. It fires on the press edge (a 50 ms poll that also debounces), a press while every rig is striking is ignored, and rig timers are not reset. A rig's timer that fires during a manual strike on it waits for that strike to end, then starts a fresh interval.
 - **Status LED:** solid during start-up, then a 1 Hz heartbeat from its own task, so a stalled scheduler shows as an LED that stops blinking.
 - **Random seed:** from `os.urandom` (hardware entropy), not `time.ticks_ms()`, which repeats across boots.
 

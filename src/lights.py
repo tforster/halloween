@@ -19,10 +19,9 @@ Timing Considerations:
 
 import time
 
-# Lightning pattern constants
-PATTERN_CLASSIC = 0      # Single bold strike
-PATTERN_FLICKERING = 1   # Multiple rapid flashes
-PATTERN_ROLLING = 2      # Gradual build-up with tail-off
+# Pixels filled between strip writes. Each write is one frame, so the batch size sets the speed
+# of the sky-to-ground sweep that every pattern shares (2025's LED_BATCH_SIZE)
+BATCH_SIZE = 40
 
 # Lightning colour constants
 LIGHTNING_BLUE = (240, 248, 255)  # Alice blue - natural lightning (90%)
@@ -42,33 +41,34 @@ def selectLightningColour(rng):
     return LIGHTNING_RED if rng.randint(1, 10) == 10 else LIGHTNING_BLUE
 
 
-async def lightningFlashClassic(strip, colour, clock, durationMs=500, batchSize=40):
+async def lightningFlashClassic(strip, colour, clock, rng):
     """
     Pattern 1: Classic single bold strike.
 
     1. Sweep to full brightness from sky (highest pixel) down to ground (pixel 0)
-    2. Hold at peak for 30% of durationMs
+    2. Hold at peak for 150ms (30% of the 2025 500ms duration)
     3. Flicker off-on-off-on
-    4. Hold for 20% of durationMs, then clear
+    4. Hold for 100ms (20%), then clear
 
-    Timing: ~500ms total (adjustable via durationMs)
+    rng is unused: it keeps the three patterns' signatures the same so one can be picked from
+    PATTERNS. Timing: ~500ms total
     """
-    await _setAllPixels(strip, colour, clock, batchSize)
-    await clock.sleep(int(durationMs * 0.3))
+    await _setAllPixels(strip, colour, clock)
+    await clock.sleep(150)
 
-    await _setAllPixels(strip, OFF_COLOUR, clock, batchSize)
+    await _setAllPixels(strip, OFF_COLOUR, clock)
     await clock.sleep(20)
-    await _setAllPixels(strip, colour, clock, batchSize)
+    await _setAllPixels(strip, colour, clock)
     await clock.sleep(30)
-    await _setAllPixels(strip, OFF_COLOUR, clock, batchSize)
+    await _setAllPixels(strip, OFF_COLOUR, clock)
     await clock.sleep(15)
-    await _setAllPixels(strip, colour, clock, batchSize)
-    await clock.sleep(int(durationMs * 0.2))
+    await _setAllPixels(strip, colour, clock)
+    await clock.sleep(100)
 
-    await _setAllPixels(strip, OFF_COLOUR, clock, batchSize)
+    await _setAllPixels(strip, OFF_COLOUR, clock)
 
 
-async def lightningFlashFlickering(strip, colour, clock, rng, batchSize=40):
+async def lightningFlashFlickering(strip, colour, clock, rng):
     """
     Pattern 2: Multiple rapid flashes with varying intensity ("chain lightning").
 
@@ -80,14 +80,14 @@ async def lightningFlashFlickering(strip, colour, clock, rng, batchSize=40):
     flashCount = rng.randint(3, 5)
     for flash in range(flashCount):
         brightness = (0.7, 0.85, 1.0)[rng.randint(0, 2)]
-        await _setAllPixels(strip, _scale(colour, brightness), clock, batchSize)
+        await _setAllPixels(strip, _scale(colour, brightness), clock)
         await clock.sleep(rng.randint(30, 80))
-        await _setAllPixels(strip, OFF_COLOUR, clock, batchSize)
+        await _setAllPixels(strip, OFF_COLOUR, clock)
         if flash < flashCount - 1:
             await clock.sleep(rng.randint(10, 50))
 
 
-async def lightningFlashRolling(strip, colour, clock, rng, batchSize=40):
+async def lightningFlashRolling(strip, colour, clock, rng):
     """
     Pattern 3: Sheet lightning: gradual build-up with tail-off and optional re-brightening.
 
@@ -99,21 +99,24 @@ async def lightningFlashRolling(strip, colour, clock, rng, batchSize=40):
     Timing: ~800-1000ms total
     """
     for brightness in (0.2, 0.4, 0.6, 0.8, 1.0):
-        await _setAllPixels(strip, _scale(colour, brightness), clock, batchSize)
+        await _setAllPixels(strip, _scale(colour, brightness), clock)
         await clock.sleep(40)
 
     await clock.sleep(100)
 
     for brightness in (0.8, 0.6, 0.4, 0.2):  # Already at peak, so start below it
-        await _setAllPixels(strip, _scale(colour, brightness), clock, batchSize)
+        await _setAllPixels(strip, _scale(colour, brightness), clock)
         await clock.sleep(60)
 
     if rng.randint(1, 5) == 1:
         await clock.sleep(50)
-        await _setAllPixels(strip, _scale(colour, 0.5), clock, batchSize)
+        await _setAllPixels(strip, _scale(colour, 0.5), clock)
         await clock.sleep(100)
 
-    await _setAllPixels(strip, OFF_COLOUR, clock, batchSize)
+    await _setAllPixels(strip, OFF_COLOUR, clock)
+
+
+PATTERNS = (lightningFlashClassic, lightningFlashFlickering, lightningFlashRolling)
 
 
 async def executeRandomLightning(strip, clock, rng):
@@ -121,22 +124,15 @@ async def executeRandomLightning(strip, clock, rng):
     Run one strike: a random pattern (one third each) in a random colour (10% red).
     Returns when the strip is dark again.
     """
-    pattern = rng.randint(PATTERN_CLASSIC, PATTERN_ROLLING)
-    colour = selectLightningColour(rng)
-
-    if pattern == PATTERN_CLASSIC:
-        await lightningFlashClassic(strip, colour, clock)
-    elif pattern == PATTERN_FLICKERING:
-        await lightningFlashFlickering(strip, colour, clock, rng)
-    else:
-        await lightningFlashRolling(strip, colour, clock, rng)
+    pattern = PATTERNS[rng.randint(0, len(PATTERNS) - 1)]
+    await pattern(strip, selectLightningColour(rng), clock, rng)
 
 
 def _scale(colour, brightness):
-    return tuple(int(c * brightness) for c in colour)
+    return tuple(int(channel * brightness) for channel in colour)
 
 
-async def _setAllPixels(strip, colour, clock, batchSize):
+async def _setAllPixels(strip, colour, clock):
     """
     Fill the strip batch by batch from the highest pixel down, writing after each batch.
 
@@ -144,8 +140,8 @@ async def _setAllPixels(strip, colour, clock, batchSize):
     are what give the 2025 patterns their downward sweep. Each write is a frame, and the 1 ms
     sleep after it is where another rig's strike gets its turn.
     """
-    for top in range(len(strip) - 1, -1, -batchSize):
-        for index in range(max(0, top - batchSize + 1), top + 1):
+    for top in range(len(strip) - 1, -1, -BATCH_SIZE):
+        for index in range(max(0, top - BATCH_SIZE + 1), top + 1):
             strip[index] = colour
         strip.write()
         await clock.sleep(1)
@@ -163,12 +159,12 @@ def _openStrip(pinNumber, pixelCount):
     return neopixel.NeoPixel(machine.Pin(pinNumber, machine.Pin.OUT), pixelCount)
 
 
-def testColors(pinNumber, pixelCount=300):
+def testColours(pinNumber, pixelCount=300):
     """
     Show pure red, green, blue and Alice blue for 2 s each to check colour balance.
 
-        >>> from lights import testColors
-        >>> testColors(16, 300)
+        >>> from lights import testColours
+        >>> testColours(16, 300)
     """
     strip = _openStrip(pinNumber, pixelCount)
     for colour in ((255, 0, 0), (0, 255, 0), (0, 0, 255), LIGHTNING_BLUE):
@@ -205,14 +201,9 @@ def testAllPatterns(pinNumber, pixelCount=300):
     from clock import PicoClock
 
     async def showAll(strip, clock):
-        for colour in (LIGHTNING_BLUE, LIGHTNING_RED):
-            await lightningFlashClassic(strip, colour, clock)
-            await clock.sleep(2000)
-        for colour in (LIGHTNING_BLUE, LIGHTNING_RED):
-            await lightningFlashFlickering(strip, colour, clock, random)
-            await clock.sleep(2000)
-        for colour in (LIGHTNING_BLUE, LIGHTNING_RED):
-            await lightningFlashRolling(strip, colour, clock, random)
-            await clock.sleep(2000)
+        for pattern in PATTERNS:
+            for colour in (LIGHTNING_BLUE, LIGHTNING_RED):
+                await pattern(strip, colour, clock, random)
+                await clock.sleep(2000)
 
     asyncio.run(showAll(_openStrip(pinNumber, pixelCount), PicoClock()))
