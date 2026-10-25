@@ -22,12 +22,12 @@ Every script in `package.json`, grouped by what it works on. Run each as `npm ru
 
 These need the virtual environment and `requirements-dev.txt`.
 
-| Script      | Runs                 | Purpose                     |
-| :---------- | :------------------- | :-------------------------- |
-| `lint:py`   | `ruff check devops/` | Lint host-side Python       |
-| `format:py` | `black devops/`      | Format host-side Python     |
-| `type:py`   | `mypy devops/`       | Type-check host-side Python |
-| `test:py`   | `pytest`             | Python tests                |
+| Script      | Runs                 | Purpose                           |
+| :---------- | :------------------- | :-------------------------------- |
+| `lint:py`   | `ruff check devops/` | Lint host-side Python             |
+| `format:py` | `black devops/`      | Format host-side Python           |
+| `type:py`   | `mypy devops/`       | Type-check host-side Python       |
+| `test:py`   | `pytest`             | Firmware tests with fake hardware |
 
 ## 3. Audio
 
@@ -38,14 +38,15 @@ These need the virtual environment and `requirements-dev.txt`.
 
 ## 4. Pico
 
-All use mpremote over USB.
+All use mpremote: over USB to the Pico, or over RFC 2217 to the Wokwi simulator.
 
-| Script       | Runs                     | Purpose                                                                        |
-| :----------- | :----------------------- | :----------------------------------------------------------------------------- |
-| `deploy`     | `devops/deploy.sh`       | Copy `src/` to the Pico; see [Deploy to the Pico](../how-to/deploy-to-pico.md) |
-| `run`        | `devops/run.sh`          | Run `src/main.py` on the Pico without copying it                               |
-| `run:repl`   | `devops/run.sh --repl`   | Run, then drop into the REPL                                                   |
-| `serve`      | `devops/serve.sh`        | Mount `src/` on the Pico for live editing                                      |
-| `serve:stop` | `devops/serve.sh --stop` | Stop the mount                                                                 |
+| Script       | Runs                     | Purpose                                                                                                                        |
+| :----------- | :----------------------- | :----------------------------------------------------------------------------------------------------------------------------- |
+| `deploy`     | `devops/deploy.sh`       | Copy `src/` to the Pico; see [Deploy to the Pico](../how-to/deploy-to-pico.md)                                                 |
+| `run`        | `devops/run.sh`          | Run `src/main.py` on the Pico without copying it                                                                               |
+| `run:repl`   | `devops/run.sh --repl`   | Run, then drop into the REPL                                                                                                   |
+| `serve`      | `devops/serve.sh`        | Mount `src/` on the Pico for live editing                                                                                      |
+| `serve:stop` | `devops/serve.sh --stop` | Stop the mount                                                                                                                 |
+| `simulate`   | `devops/simulate.sh`     | Copy `src/` into a running Wokwi simulation and start it in test mode; see [Simulate in Wokwi](../how-to/simulate-in-wokwi.md) |
 
 [← Back to Reference](./README.md)

@@ -1,8 +1,9 @@
 """
 NeoPixel Lightning Effect Module
 
-This module provides lightning flash animations for WS2812B NeoPixel LEDs.
-Uses batched updates for memory efficiency and timing optimisation.
+Lightning flash animations for WS2812B NeoPixel strips, written as coroutines so several rigs
+can strike at once: every pattern awaits the clock between frames, which lets the asyncio
+scheduler interleave the frames of overlapping strikes on different strips.
 
 Hardware Requirements:
 - WS2812B NeoPixel strip (tested with 300 LEDs)
@@ -10,13 +11,13 @@ Hardware Requirements:
 - Adequate 5V power supply (see power calculations in docs/reference/hardware.md)
 
 Timing Considerations:
-- WS2812B protocol is timing-sensitive
-- Batch updates to minimise blocking time
-- Keep animation functions fast to avoid glitches
+- WS2812B protocol is timing-sensitive, and a full 300-pixel write blocks for about 9 ms
+  (docs/reference/known-issues.md). Each write() is one frame; patterns yield after it.
+- The strip, clock and random source are passed in, so the patterns run under host Python with
+  fakes. Only the REPL test helpers at the bottom import machine/neopixel, and only when called.
 """
 
 import time
-import random
 
 # Lightning pattern constants
 PATTERN_CLASSIC = 0      # Single bold strike
@@ -27,474 +28,191 @@ PATTERN_ROLLING = 2      # Gradual build-up with tail-off
 LIGHTNING_BLUE = (240, 248, 255)  # Alice blue - natural lightning (90%)
 LIGHTNING_RED = (255, 0, 0)        # Blood red - supernatural effect (10%)
 
-# Legacy constants (for backward compatibility)
-LIGHTNING_COLOUR = LIGHTNING_BLUE  # Alias for existing code
-LIGHTNING_COLOUR_TEST = (120, 124, 128)  # 50% brightness for testing
-
 # Dark/off state
 OFF_COLOUR = (0, 0, 0)
 
 
-def selectLightningPattern():
+def selectLightningColour(rng):
     """
-    Randomly select a lightning pattern with equal probability.
-    
-    Returns:
-        int: Pattern constant (PATTERN_CLASSIC, PATTERN_FLICKERING, or PATTERN_ROLLING)
-    
-    Distribution: 33.3% chance for each pattern
+    Pick the strike colour: 90% Alice blue (natural), 10% blood red (supernatural).
+
+    2025 shipped with red on rolls 9-10 (20%) despite documenting 10%; the 2026 blueprint
+    settles it at 10%.
     """
-    return random.randint(0, 2)
+    return LIGHTNING_RED if rng.randint(1, 10) == 10 else LIGHTNING_BLUE
 
 
-def selectLightningColour():
-    """
-    Randomly select lightning colour with weighted probability.
-    
-    Returns:
-        tuple: RGB colour (r, g, b)
-    
-    Distribution:
-        - 90% chance: Alice blue (natural lightning)
-        - 10% chance: Blood red (supernatural effect)
-    """
-    roll = random.randint(1, 10)
-
-    if roll <= 8:  # 1-8 = 80%
-        return LIGHTNING_BLUE
-    else:          # 9-10 = 20%
-        return LIGHTNING_RED
-
-
-def lightningFlashClassic(np, colour, duration_ms=500, batch_size=40):
+async def lightningFlashClassic(strip, colour, clock, durationMs=500, batchSize=40):
     """
     Pattern 1: Classic single bold strike.
-    
-    Creates a bright flash effect by illuminating all pixels,
-    then fading/flickering before turning off. Uses batched updates to
-    minimise timing issues and memory overhead.
-    
-    Args:
-        np: neopixel.NeoPixel object (pre-initialised)
-        colour: RGB tuple (r, g, b) for lightning colour
-        duration_ms: Total flash duration in milliseconds (default 500ms)
-        batch_size: Number of pixels to update per write cycle (default 40)
-    
-    Algorithm:
-        1. Rapid flash to full brightness (batched)
-        2. Brief hold at peak brightness
-        3. Quick flicker (on-off-on pattern)
-        4. Fade to off
-    
-    Memory: ~150 bytes for function stack, no allocations in loop
-    Timing: ~500ms total (adjustable via duration_ms)
+
+    1. Sweep to full brightness from sky (highest pixel) down to ground (pixel 0)
+    2. Hold at peak for 30% of durationMs
+    3. Flicker off-on-off-on
+    4. Hold for 20% of durationMs, then clear
+
+    Timing: ~500ms total (adjustable via durationMs)
     """
-    pixel_count = len(np)
-    
-    # Phase 1: Rapid flash to full brightness (batched for efficiency)
-    # Lightning travels from sky (highest pixel) down to ground (pixel 0)
-    for i in range(pixel_count - 1, -1, -batch_size):
-        # Fill batch from current position down to lower bound
-        start = max(0, i - batch_size + 1)
-        for j in range(start, i + 1):
-            np[j] = colour
-        np.write()
-        time.sleep_ms(1)
-    
-    # Phase 2: Hold at peak brightness
-    time.sleep_ms(int(duration_ms * 0.3))  # 30% of duration
-    
-    # Phase 3: Flicker effect (on-off-on pattern)
-    _clearAllPixels(np, batch_size)
-    time.sleep_ms(20)
-    
-    _setAllPixels(np, colour, batch_size)
-    time.sleep_ms(30)
-    
-    _clearAllPixels(np, batch_size)
-    time.sleep_ms(15)
-    
-    _setAllPixels(np, colour, batch_size)
-    time.sleep_ms(int(duration_ms * 0.2))  # 20% of duration
-    
-    # Phase 4: Fade to off
-    _clearAllPixels(np, batch_size)
+    await _setAllPixels(strip, colour, clock, batchSize)
+    await clock.sleep(int(durationMs * 0.3))
+
+    await _setAllPixels(strip, OFF_COLOUR, clock, batchSize)
+    await clock.sleep(20)
+    await _setAllPixels(strip, colour, clock, batchSize)
+    await clock.sleep(30)
+    await _setAllPixels(strip, OFF_COLOUR, clock, batchSize)
+    await clock.sleep(15)
+    await _setAllPixels(strip, colour, clock, batchSize)
+    await clock.sleep(int(durationMs * 0.2))
+
+    await _setAllPixels(strip, OFF_COLOUR, clock, batchSize)
 
 
-def lightningFlashFlickering(np, colour, duration_ms=500, batch_size=40):
+async def lightningFlashFlickering(strip, colour, clock, rng, batchSize=40):
     """
-    Pattern 2: Multiple rapid flashes with varying intensity.
-    
-    Simulates branching lightning with multiple quick strikes.
-    Creates a "chain lightning" effect with random brightness variations.
-    
-    Args:
-        np: neopixel.NeoPixel object (pre-initialised)
-        colour: RGB tuple (r, g, b) for lightning colour
-        duration_ms: Base duration (pattern overrides to ~400-600ms)
-        batch_size: Number of pixels to update per write cycle
-    
-    Algorithm:
-        - 3-5 rapid flashes (randomized)
-        - Each flash: 70%, 85%, or 100% brightness
-        - Very short hold (30-80ms per flash)
-        - Random gaps between flashes (10-50ms)
-    
-    Memory: Minimal, uses existing helpers
+    Pattern 2: Multiple rapid flashes with varying intensity ("chain lightning").
+
+    - 3-5 flashes, each at 70%, 85% or 100% brightness
+    - Each held 30-80ms, with 10-50ms gaps between flashes
+
     Timing: ~400-600ms total
     """
-    # Determine number of flashes (3-5)
-    num_flashes = random.randint(3, 5)
-    
-    for flash in range(num_flashes):
-        # Random brightness: 70%, 85%, or 100%
-        brightness_choice = random.randint(0, 2)
-        if brightness_choice == 0:
-            brightness = 0.7
-        elif brightness_choice == 1:
-            brightness = 0.85
-        else:
-            brightness = 1.0
-        
-        # Scale colour by brightness
-        scaled_colour = tuple(int(c * brightness) for c in colour)
-        
-        # Flash on
-        _setAllPixels(np, scaled_colour, batch_size)
-        
-        # Hold for random duration (30-80ms)
-        hold_time = random.randint(30, 80)
-        time.sleep_ms(hold_time)
-        
-        # Flash off
-        _clearAllPixels(np, batch_size)
-        
-        # Gap before next flash (10-50ms), except after last flash
-        if flash < num_flashes - 1:
-            gap_time = random.randint(10, 50)
-            time.sleep_ms(gap_time)
+    flashCount = rng.randint(3, 5)
+    for flash in range(flashCount):
+        brightness = (0.7, 0.85, 1.0)[rng.randint(0, 2)]
+        await _setAllPixels(strip, _scale(colour, brightness), clock, batchSize)
+        await clock.sleep(rng.randint(30, 80))
+        await _setAllPixels(strip, OFF_COLOUR, clock, batchSize)
+        if flash < flashCount - 1:
+            await clock.sleep(rng.randint(10, 50))
 
 
-def lightningFlashRolling(np, colour, duration_ms=800, batch_size=40):
+async def lightningFlashRolling(strip, colour, clock, rng, batchSize=40):
     """
-    Pattern 3: Gradual build-up with tail-off and optional re-brightening.
-    
-    Simulates sheet lightning or distant storm illumination.
-    Creates a slower, more dramatic effect.
-    
-    Args:
-        np: neopixel.NeoPixel object (pre-initialised)
-        colour: RGB tuple (r, g, b) for lightning colour
-        duration_ms: Total duration (default 800ms, longer than other patterns)
-        batch_size: Number of pixels to update per write cycle
-    
-    Algorithm:
-        - Gradual fade-up (5 steps: 20%, 40%, 60%, 80%, 100%)
-        - Quick peak hold (100ms)
-        - Gradual fade-down (5 steps)
-        - 20% chance of re-brightening (50% brightness, 100ms)
-        - Final fade to off
-    
-    Memory: Minimal, uses existing helpers
+    Pattern 3: Sheet lightning: gradual build-up with tail-off and optional re-brightening.
+
+    - Fade up in 5 steps (20%-100%, 40ms each), hold 100ms
+    - Fade down in 4 steps (80%-20%, 60ms each)
+    - 20% chance of a 50% re-brightening for 100ms after a 50ms pause
+    - Clear
+
     Timing: ~800-1000ms total
     """
-    # Phase 1: Fade up (5 steps)
-    fade_steps = [0.2, 0.4, 0.6, 0.8, 1.0]
-    for brightness in fade_steps:
-        scaled_colour = tuple(int(c * brightness) for c in colour)
-        _setAllPixels(np, scaled_colour, batch_size)
-        time.sleep_ms(40)  # 40ms per step = 200ms total
-    
-    # Phase 2: Peak hold
-    time.sleep_ms(100)
-    
-    # Phase 3: Fade down (5 steps, reversed)
-    fade_steps.reverse()
-    for brightness in fade_steps[1:]:  # Skip 1.0 (already at peak)
-        scaled_colour = tuple(int(c * brightness) for c in colour)
-        _setAllPixels(np, scaled_colour, batch_size)
-        time.sleep_ms(60)  # 60ms per step = 240ms total
-    
-    # Phase 4: Random re-brightening (20% chance)
-    if random.randint(1, 5) == 1:  # 1 in 5 = 20%
-        time.sleep_ms(50)  # Brief pause
-        
-        # Re-brighten to 50%
-        scaled_colour = tuple(int(c * 0.5) for c in colour)
-        _setAllPixels(np, scaled_colour, batch_size)
-        time.sleep_ms(100)
-    
-    # Phase 5: Final fade to off
-    _clearAllPixels(np, batch_size)
+    for brightness in (0.2, 0.4, 0.6, 0.8, 1.0):
+        await _setAllPixels(strip, _scale(colour, brightness), clock, batchSize)
+        await clock.sleep(40)
+
+    await clock.sleep(100)
+
+    for brightness in (0.8, 0.6, 0.4, 0.2):  # Already at peak, so start below it
+        await _setAllPixels(strip, _scale(colour, brightness), clock, batchSize)
+        await clock.sleep(60)
+
+    if rng.randint(1, 5) == 1:
+        await clock.sleep(50)
+        await _setAllPixels(strip, _scale(colour, 0.5), clock, batchSize)
+        await clock.sleep(100)
+
+    await _setAllPixels(strip, OFF_COLOUR, clock, batchSize)
 
 
-def executeRandomLightning(np, duration_ms=500, batch_size=40):
+async def executeRandomLightning(strip, clock, rng):
     """
-    Execute a random lightning flash with random pattern and colour.
-    
-    Main entry point for randomized lightning effects. Automatically selects
-    pattern (equal distribution) and colour (90% blue, 10% red).
-    
-    Args:
-        np: neopixel.NeoPixel object (pre-initialised)
-        duration_ms: Base duration hint (patterns may override)
-        batch_size: Number of pixels to update per write cycle
-    
-    Pattern Distribution:
-        - 33.3% Classic (single bold strike)
-        - 33.3% Flickering (multiple rapid flashes)
-        - 33.3% Rolling (gradual build-up)
-    
-    Colour Distribution:
-        - 90% Alice blue (natural lightning)
-        - 10% Blood red (supernatural effect)
-    
-    Usage:
-        >>> from lights import executeRandomLightning
-        >>> import machine, neopixel
-        >>> pin = machine.Pin(16, machine.Pin.OUT)
-        >>> np = neopixel.NeoPixel(pin, 300)
-        >>> executeRandomLightning(np)
+    Run one strike: a random pattern (one third each) in a random colour (10% red).
+    Returns when the strip is dark again.
     """
-    # Select pattern and colour
-    pattern = selectLightningPattern()
-    colour = selectLightningColour()
-    
-    # Execute appropriate pattern
+    pattern = rng.randint(PATTERN_CLASSIC, PATTERN_ROLLING)
+    colour = selectLightningColour(rng)
+
     if pattern == PATTERN_CLASSIC:
-        lightningFlashClassic(np, colour, duration_ms, batch_size)
+        await lightningFlashClassic(strip, colour, clock)
     elif pattern == PATTERN_FLICKERING:
-        lightningFlashFlickering(np, colour, duration_ms, batch_size)
-    else:  # PATTERN_ROLLING
-        lightningFlashRolling(np, colour, duration_ms, batch_size)
+        await lightningFlashFlickering(strip, colour, clock, rng)
+    else:
+        await lightningFlashRolling(strip, colour, clock, rng)
 
 
-def clearLights(np, batch_size=40):
+def _scale(colour, brightness):
+    return tuple(int(c * brightness) for c in colour)
+
+
+async def _setAllPixels(strip, colour, clock, batchSize):
     """
-    Turn off all NeoPixels (set to black).
-    
-    Uses batched updates for efficiency. Safe to call repeatedly.
-    
-    Args:
-        np: neopixel.NeoPixel object
-        batch_size: Pixels per write cycle (default 40)
-    
-    Memory: Minimal stack usage, no allocations
-    Timing: ~30ms for 300 pixels with batch_size=40
+    Fill the strip batch by batch from the highest pixel down, writing after each batch.
+
+    Lightning travels from sky (highest pixel) down to ground (pixel 0); the batched writes
+    are what give the 2025 patterns their downward sweep. Each write is a frame, and the 1 ms
+    sleep after it is where another rig's strike gets its turn.
     """
-    _clearAllPixels(np, batch_size)
+    for top in range(len(strip) - 1, -1, -batchSize):
+        for index in range(max(0, top - batchSize + 1), top + 1):
+            strip[index] = colour
+        strip.write()
+        await clock.sleep(1)
 
 
-def _setAllPixels(np, colour, batch_size=40):
-    """
-    Internal helper: Set all pixels to specified colour using batched writes.
-    
-    Lightning travels from sky (highest pixel) down to ground (pixel 0).
-    Batches start at the top and work downward.
-    
-    Args:
-        np: neopixel.NeoPixel object
-        colour: RGB tuple (r, g, b) where each value is 0-255
-        batch_size: Pixels per write cycle
-    
-    Note: Leading underscore indicates internal use only
-    """
-    pixel_count = len(np)
-    # Start from highest pixel and work down to 0
-    for i in range(pixel_count - 1, -1, -batch_size):
-        # Fill batch from current position down to lower bound
-        start = max(0, i - batch_size + 1)
-        for j in range(start, i + 1):
-            np[j] = colour
-        np.write()
-        time.sleep_ms(1)  # Prevent timing issues
+# ============================================================================
+# REPL TEST HELPERS (Pico only: they create their own strip)
+# ============================================================================
 
 
-def _clearAllPixels(np, batch_size=40):
-    """
-    Internal helper: Clear all pixels (set to off/black) using batched writes.
-    
-    Args:
-        np: neopixel.NeoPixel object
-        batch_size: Pixels per write cycle
-    
-    Note: Leading underscore indicates internal use only
-    """
-    _setAllPixels(np, OFF_COLOUR, batch_size)
+def _openStrip(pinNumber, pixelCount):
+    import machine
+    import neopixel
+
+    return neopixel.NeoPixel(machine.Pin(pinNumber, machine.Pin.OUT), pixelCount)
 
 
-def testColors(pin_number, pixel_count=300):
+def testColors(pinNumber, pixelCount=300):
     """
-    Test individual color channels to diagnose color balance issues.
-    
-    Displays pure red, green, blue, and white in sequence to check
-    for color consistency across the strip.
-    
-    Args:
-        pin_number: GPIO pin number connected to NeoPixel data
-        pixel_count: Number of NeoPixels in strip (default 300)
-    
-    Usage:
+    Show pure red, green, blue and Alice blue for 2 s each to check colour balance.
+
         >>> from lights import testColors
         >>> testColors(16, 300)
     """
-    import machine
-    import neopixel
-    
-    print(f"🎨 Color Test - GPIO {pin_number}, {pixel_count} pixels")
-    
-    pin = machine.Pin(pin_number, machine.Pin.OUT)
-    np = neopixel.NeoPixel(pin, pixel_count)
-    
-    # Test RED
-    print("Testing RED...")
-    for i in range(pixel_count):
-        np[i] = (255, 0, 0)
-    np.write()
-    time.sleep(2)
-    
-    # Test GREEN
-    print("Testing GREEN...")
-    for i in range(pixel_count):
-        np[i] = (0, 255, 0)
-    np.write()
-    time.sleep(2)
-    
-    # Test BLUE
-    print("Testing BLUE...")
-    for i in range(pixel_count):
-        np[i] = (0, 0, 255)
-    np.write()
-    time.sleep(2)
-    
-    # Test WHITE
-    print("Testing WHITE (alice blue)...")
-    for i in range(pixel_count):
-        np[i] = (240, 248, 255)
-    np.write()
-    time.sleep(2)
-    
-    # Clear
-    print("Clearing...")
-    for i in range(pixel_count):
-        np[i] = (0, 0, 0)
-    np.write()
-    
-    print("✅ Color test complete")
+    strip = _openStrip(pinNumber, pixelCount)
+    for colour in ((255, 0, 0), (0, 255, 0), (0, 0, 255), LIGHTNING_BLUE):
+        strip.fill(colour)
+        strip.write()
+        time.sleep(2)
+    strip.fill(OFF_COLOUR)
+    strip.write()
 
 
-def testLightning(pin_number, pixel_count=300):
+def testLightning(pinNumber, pixelCount=300):
     """
-    Test function for random lightning animation.
-    
-    Executes a random lightning pattern with random colour.
-    Can be called from REPL for testing without full system.
-    
-    Usage:
+    Run one random strike on a strip.
+
         >>> from lights import testLightning
-        >>> testLightning(16, 300)  # Test on GPIO 16 with 300 pixels
-    
-    Args:
-        pin_number: GPIO pin number connected to NeoPixel data
-        pixel_count: Number of NeoPixels in strip (default 300)
-    
-    Hardware Requirements:
-        - NeoPixel strip connected via level shifter to specified GPIO
-        - Adequate 5V power supply for NeoPixels
-        - Common ground between Pico and NeoPixel power supply
+        >>> testLightning(16, 300)
     """
-    import machine
-    import neopixel
-    
-    print(f"🎃 Lightning Test - GPIO {pin_number}, {pixel_count} pixels")
-    print("Initialising NeoPixels...")
-    
-    # Initialise NeoPixel strip
-    pin = machine.Pin(pin_number, machine.Pin.OUT)
-    np = neopixel.NeoPixel(pin, pixel_count)
-    
-    print("✅ NeoPixels initialised")
-    print("Executing random lightning flash...")
-    
-    # Execute random flash
-    executeRandomLightning(np, duration_ms=500, batch_size=40)
-    
-    print("⚡ Flash complete")
-    print("Clearing lights...")
-    
-    clearLights(np)
-    
-    print("✅ Test complete - lights cleared")
+    import asyncio
+    import random
+    from clock import PicoClock
+
+    asyncio.run(executeRandomLightning(_openStrip(pinNumber, pixelCount), PicoClock(), random))
 
 
-def testAllPatterns(pin_number, pixel_count=300):
+def testAllPatterns(pinNumber, pixelCount=300):
     """
-    Test all three lightning patterns in sequence.
-    
-    Displays each pattern twice (once blue, once red) for comparison.
-    Useful for verifying all patterns work correctly and comparing effects.
-    
-    Usage:
+    Run each pattern in blue then red, 2 s apart, to compare them.
+
         >>> from lights import testAllPatterns
-        >>> testAllPatterns(16, 300)
-    
-    Args:
-        pin_number: GPIO pin number connected to NeoPixel data
-        pixel_count: Number of NeoPixels in strip (default 300)
-    
-    Test Sequence:
-        1. Classic - Blue
-        2. Classic - Red
-        3. Flickering - Blue
-        4. Flickering - Red
-        5. Rolling - Blue
-        6. Rolling - Red
+        >>> testAllPatterns(17, 300)
     """
-    import machine
-    import neopixel
-    
-    print(f"🎨 Pattern Test - GPIO {pin_number}, {pixel_count} pixels")
-    print("Testing all patterns with both colours...")
-    
-    pin = machine.Pin(pin_number, machine.Pin.OUT)
-    np = neopixel.NeoPixel(pin, pixel_count)
-    
-    # Test Pattern 1: Classic
-    print("\n1️⃣  Pattern: CLASSIC (Blue)")
-    lightningFlashClassic(np, LIGHTNING_BLUE, 500, 40)
-    time.sleep(2)
-    
-    print("1️⃣  Pattern: CLASSIC (Red)")
-    lightningFlashClassic(np, LIGHTNING_RED, 500, 40)
-    time.sleep(2)
-    
-    # Test Pattern 2: Flickering
-    print("\n2️⃣  Pattern: FLICKERING (Blue)")
-    lightningFlashFlickering(np, LIGHTNING_BLUE, 500, 40)
-    time.sleep(2)
-    
-    print("2️⃣  Pattern: FLICKERING (Red)")
-    lightningFlashFlickering(np, LIGHTNING_RED, 500, 40)
-    time.sleep(2)
-    
-    # Test Pattern 3: Rolling
-    print("\n3️⃣  Pattern: ROLLING (Blue)")
-    lightningFlashRolling(np, LIGHTNING_BLUE, 800, 40)
-    time.sleep(2)
-    
-    print("3️⃣  Pattern: ROLLING (Red)")
-    lightningFlashRolling(np, LIGHTNING_RED, 800, 40)
-    time.sleep(2)
-    
-    # Clear
-    clearLights(np)
-    print("\n✅ All patterns tested - lights cleared")
+    import asyncio
+    import random
+    from clock import PicoClock
 
+    async def showAll(strip, clock):
+        for colour in (LIGHTNING_BLUE, LIGHTNING_RED):
+            await lightningFlashClassic(strip, colour, clock)
+            await clock.sleep(2000)
+        for colour in (LIGHTNING_BLUE, LIGHTNING_RED):
+            await lightningFlashFlickering(strip, colour, clock, random)
+            await clock.sleep(2000)
+        for colour in (LIGHTNING_BLUE, LIGHTNING_RED):
+            await lightningFlashRolling(strip, colour, clock, random)
+            await clock.sleep(2000)
 
-# Module-level test when run directly
-if __name__ == "__main__":
-    print("lights.py - NeoPixel Lightning Effect Module")
-    print("Import this module and call executeRandomLightning() or testLightning()")
-    print("Example: testLightning(16, 300)")
-    print("Example: testAllPatterns(16, 300)")
-
+    asyncio.run(showAll(_openStrip(pinNumber, pixelCount), PicoClock()))
