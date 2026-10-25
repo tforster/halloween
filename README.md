@@ -1,8 +1,5 @@
 # Halloween Lightning & Thunder Effect
 
-> **📦 Looking for the 2024 ESP32 version?**  
-> This is the **2025 implementation** using Raspberry Pi Pico 2. For the original ESP32-based system with built-in DAC audio, see the [`2024` tag](https://github.com/tforster/halloween/tree/2024).
-
 A Raspberry Pi Pico 2-based Halloween display controller that creates synchronised lightning and thunder effects using NeoPixel LED strips and high-quality MP3 audio playback.
 
 **Key Features:**
@@ -13,6 +10,13 @@ A Raspberry Pi Pico 2-based Halloween display controller that creates synchronis
 - 📦 Multi-board deployment (3 independent units)
 
 **For detailed technical documentation, see [Developer Guide](docs/Developer-Guide.md)**
+
+## Previous Years
+
+| Year | Highlights | Source |
+| :--- | :--- | :--- |
+| 2025 | • Raspberry Pi Pico 2 + DFPlayer Mini MP3 module (16-bit audio from MicroSD)<br>• Autonomous random triggering every 60-120 seconds<br>• Three independent boards with three lightning patterns | [`2025` tag](https://github.com/tforster/halloween/tree/2025) |
+| 2024 | • ESP32 with built-in 8-bit DAC playing WAV thunder<br>• Threaded, simultaneous lightning and thunder<br>• Single board, manually triggered by switch | [`2024` tag](https://github.com/tforster/halloween/tree/2024) |
 
 ## Quick Start
 

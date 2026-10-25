@@ -1,9 +1,5 @@
 # Developer Guide <!-- omit in toc -->
 
-> [!NOTE]
-> This guide documents the **2025 Raspberry Pi Pico 2 implementation**.  
-> For the 2024 ESP32 version, see the [`2024` tag](https://github.com/tforster/halloween/tree/2024).
-
 A living document of design decisions, challenges, and solutions for the Halloween Lightning & Thunder effect system.
 
 ## Table of Contents <!-- omit in toc -->
