@@ -4,14 +4,14 @@ _A quick introduction to anyone interested in contributing to the Halloween proj
 
 ## Table of Contents <!-- omit in toc -->
 
-- [Issues](#issues)
-- [Pull Requests](#pull-requests)
-  - [Does it state intent](#does-it-state-intent)
-  - [Is it of good quality](#is-it-of-good-quality)
-  - [Does it move this repository closer to my vision for the repository](#does-it-move-this-repository-closer-to-my-vision-for-the-repository)
-  - [Does it follow the contributor covenant](#does-it-follow-the-contributor-covenant)
+- [1. Issues](#1-issues)
+- [2. Pull Requests](#2-pull-requests)
+  - [2.1. Does it state intent](#21-does-it-state-intent)
+  - [2.2. Is it of good quality](#22-is-it-of-good-quality)
+  - [2.3. Does it move this repository closer to my vision for the repository](#23-does-it-move-this-repository-closer-to-my-vision-for-the-repository)
+  - [2.4. Does it follow the contributor covenant](#24-does-it-follow-the-contributor-covenant)
 
-## Issues
+## 1. Issues
 
 Issues are very valuable to this project.
 
@@ -21,13 +21,13 @@ Issues are very valuable to this project.
 
 Thank you for creating them.
 
-## Pull Requests
+## 2. Pull Requests
 
 Pull requests are, a great way to get your ideas into this repository.
 
 When deciding if I merge in a pull request I look at the following things:
 
-### Does it state intent
+### 2.1. Does it state intent
 
 You should be clear which problem you're trying to solve with your contribution.
 
@@ -42,19 +42,23 @@ Doesn't tell me anything about why you're doing that
 
 Tells me the problem that you have found, and the pull request shows me the action you have taken to solve it.
 
-### Is it of good quality
+### 2.2. Is it of good quality
 
 - There are no spelling mistakes
 - It reads well
-- For english language contributions: Has a good score on [Grammarly](grammarly.com) or [Hemingway App](http://www.hemingwayapp.com/)
+- For english language contributions: Has a good score on [Grammarly](https://www.grammarly.com) or [Hemingway App](http://www.hemingwayapp.com/)
 
-### Does it move this repository closer to my vision for the repository
+### 2.3. Does it move this repository closer to my vision for the repository
 
 The aim of this repository is:
 
-- Provide an easy to use, lightweight and extremely fast module to build and publish typical web projects including sites, apps and PWAs.
-- The module can be used in development and publishing workflows on local machines and serverless deployments respectively.
+- Put on a convincing, reliable lightning and thunder display every Halloween from cheap, easy-to-source hardware.
+- Keep each season's build simple enough for one person to assemble, deploy and repair.
 
-### Does it follow the contributor covenant
+Commit and pull request conventions are in [CLAUDE.md](CLAUDE.md#version-control).
+
+### 2.4. Does it follow the contributor covenant
 
 This repository has a [code of conduct](CODE_OF_CONDUCT.md), I will remove things that do not respect it.
+
+[← Back to README](README.md)

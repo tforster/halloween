@@ -8,8 +8,9 @@ Design and architecture documents explaining why the project works the way it do
 
 ## 1. Documents
 
-| Document | Summary |
-| :--- | :--- |
+| Document                                                  | Summary                                                                            |
+| :-------------------------------------------------------- | :--------------------------------------------------------------------------------- |
 | [2026 Blueprint: Two Rigs, One Pico](./2026-blueprint.md) | Technical blueprint for epic HALL-1: one Pico 2 driving two rigs with shared audio |
+| [Design Challenges](./design-challenges.md)               | Problems met building the 2025 edition and how each was solved                     |
 
-[← Back to README](../../README.md)
+[← Back to Documentation Home](../README.md)

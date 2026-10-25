@@ -9,14 +9,14 @@ A Raspberry Pi Pico 2-based Halloween display controller that creates synchronis
 - 🎲 Autonomous random triggering (60-120 second intervals)
 - 📦 Multi-board deployment (3 independent units)
 
-**For detailed technical documentation, see [Developer Guide](docs/Developer-Guide.md)**
+**For detailed technical documentation, see [the docs](docs/README.md).**
 
 ## Previous Years
 
-| Year | Highlights | Source |
-| :--- | :--- | :--- |
+| Year | Highlights                                                                                                                                                                                      | Source                                                        |
+| :--- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------ |
 | 2025 | • Raspberry Pi Pico 2 + DFPlayer Mini MP3 module (16-bit audio from MicroSD)<br>• Autonomous random triggering every 60-120 seconds<br>• Three independent boards with three lightning patterns | [`2025` tag](https://github.com/tforster/halloween/tree/2025) |
-| 2024 | • ESP32 with built-in 8-bit DAC playing WAV thunder<br>• Threaded, simultaneous lightning and thunder<br>• Single board, manually triggered by switch | [`2024` tag](https://github.com/tforster/halloween/tree/2024) |
+| 2024 | • ESP32 with built-in 8-bit DAC playing WAV thunder<br>• Threaded, simultaneous lightning and thunder<br>• Single board, manually triggered by switch                                           | [`2024` tag](https://github.com/tforster/halloween/tree/2024) |
 
 ## Quick Start
 
@@ -37,7 +37,7 @@ A Raspberry Pi Pico 2-based Halloween display controller that creates synchronis
 - Python 3.13+
 - Node.js/npm
 
-> 📖 **Full hardware details and assembly:** [Developer Guide - Hardware Assembly](docs/Developer-Guide.md#4-hardware-assembly-notes)
+> 📖 **Full hardware details and assembly:** [Assemble the Hardware](docs/how-to/assemble-hardware.md)
 
 ### Installation
 
@@ -45,7 +45,6 @@ A Raspberry Pi Pico 2-based Halloween display controller that creates synchronis
 # 1. Clone and setup
 git clone https://github.com/tforster/halloween.git
 cd halloween
-git checkout 2025
 npm install
 
 # 2. Setup Python environment
@@ -64,7 +63,7 @@ python devops/prepare_audio.py
 npm run deploy
 ```
 
-> 📖 **Detailed setup instructions:** [Developer Guide - Development Environment Setup](docs/Developer-Guide.md#3-development-environment-setup)
+> 📖 **Detailed setup instructions:** [Set Up the Development Environment](docs/how-to/set-up-development-environment.md)
 
 ## Usage
 
@@ -72,7 +71,7 @@ npm run deploy
 
 **Triggered Mode** (optional): Connect a switch/sensor to trigger effects manually.
 
-> 📖 **Configuration, testing, and debugging:** [Developer Guide - Testing & Debugging](docs/Developer-Guide.md#6-testing--debugging)
+> 📖 **Configuration, testing, and debugging:** [Test and Debug](docs/how-to/test-and-debug.md)
 
 ## Architecture
 
@@ -88,18 +87,13 @@ npm run deploy
 - `devops/prepare_audio.py` - Prepare MP3 files for DFPlayer
 - `devops/test_mp3_serial.py` - Test MP3 module communication
 
-> 📖 **Complete architecture and ADRs:** [Developer Guide - Architecture Decision Records](docs/Developer-Guide.md#1-architecture-decision-records-adrs)
+> 📖 **Complete architecture and ADRs:** [Architecture Decision Records](docs/reference/adr/README.md)
 
 ## Documentation
 
-- **[Developer Guide](docs/Developer-Guide.md)** - Complete technical documentation
-  - Architecture Decision Records (ADRs)
-  - Setup and configuration
-  - Hardware assembly
-  - DevOps tools
-  - Testing and debugging
-  - Known issues
-- **[AGENTS.md](AGENTS.md)** - AI agent context and conventions
+- **[Documentation home](docs/README.md)** - Tutorials, how-to guides, reference and explanation
+- **[2026 Blueprint](docs/explanation/2026-blueprint.md)** - The two-rig, one-Pico design in progress
+- **[CLAUDE.md](CLAUDE.md)** - AI agent context and conventions
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history
 
 ## Contributing
@@ -121,4 +115,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Licence
 
-This project is licensed under the MIT Licence.
+This project is licensed under the MIT Licence. See [LICENSE](LICENSE).

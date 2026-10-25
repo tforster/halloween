@@ -7,7 +7,7 @@
 
   // Python language server configuration
   "python.languageServer": "Pylance",
-  
+
   // Suppress warnings for MicroPython modules not found locally
   "python.analysis.diagnosticSeverityOverrides": {
     "reportMissingModuleSource": "none",

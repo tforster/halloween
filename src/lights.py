@@ -7,7 +7,7 @@ Uses batched updates for memory efficiency and timing optimisation.
 Hardware Requirements:
 - WS2812B NeoPixel strip (tested with 300 LEDs)
 - 3.3V→5V logic level shifter on data line
-- Adequate 5V power supply (see power calculations in Developer Guide)
+- Adequate 5V power supply (see power calculations in docs/reference/hardware.md)
 
 Timing Considerations:
 - WS2812B protocol is timing-sensitive
