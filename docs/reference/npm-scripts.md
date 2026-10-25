@@ -40,13 +40,13 @@ These need the virtual environment and `requirements-dev.txt`.
 
 All use mpremote: over USB to the Pico, or over RFC 2217 to the Wokwi simulator.
 
-| Script       | Runs                     | Purpose                                                                                                                        |
-| :----------- | :----------------------- | :----------------------------------------------------------------------------------------------------------------------------- |
-| `deploy`     | `devops/deploy.sh`       | Copy `src/` to the Pico; see [Deploy to the Pico](../how-to/deploy-to-pico.md)                                                 |
-| `run`        | `devops/run.sh`          | Run `src/main.py` on the Pico without copying it                                                                               |
-| `run:repl`   | `devops/run.sh --repl`   | Run, then drop into the REPL                                                                                                   |
-| `serve`      | `devops/serve.sh`        | Mount `src/` on the Pico for live editing                                                                                      |
-| `serve:stop` | `devops/serve.sh --stop` | Stop the mount                                                                                                                 |
-| `simulate`   | `devops/simulate.sh`     | Copy `src/` into a running Wokwi simulation and start it in test mode; see [Simulate in Wokwi](../how-to/simulate-in-wokwi.md) |
+| Script       | Runs                     | Purpose                                                                                                                       |
+| :----------- | :----------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| `deploy`     | `devops/deploy.sh`       | Copy `src/` to the Pico; see [Deploy to the Pico](../how-to/deploy-to-pico.md)                                                |
+| `run`        | `devops/run.sh`          | Run `src/main.py` on the Pico without copying it                                                                              |
+| `run:repl`   | `devops/run.sh --repl`   | Run, then drop into the REPL                                                                                                  |
+| `serve`      | `devops/serve.sh`        | Mount `src/` on the Pico for live editing                                                                                     |
+| `serve:stop` | `devops/serve.sh --stop` | Stop the mount                                                                                                                |
+| `simulate`   | `devops/simulate.sh`     | Mount `src/` in a running Wokwi simulation and start it in test mode; see [Simulate in Wokwi](../how-to/simulate-in-wokwi.md) |
 
 [← Back to Reference](./README.md)

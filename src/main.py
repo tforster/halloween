@@ -9,7 +9,7 @@ docs/explanation/2026-blueprint.md.
 Hardware Configuration:
 - GPIO 16: Rig A NeoPixel data (via 74AHCT125 level shifter)
 - GPIO 17: Rig B NeoPixel data (adjacent pin, also PIO-capable)
-- GPIO 4:  UART1 TX → DFPlayer Mini RX
+- GPIO 4:  UART1 TX -> DFPlayer Mini RX
 - GPIO 5:  UART1 RX (reserved; no feedback is read)
 - GPIO 15: Optional manual trigger (pull-down, active high)
 - GPIO 25: Onboard LED, heartbeat while the scheduler runs
@@ -37,14 +37,14 @@ RIGS = [
 ]
 
 # MP3 Player Configuration
-MP3_TX_PIN = 4           # UART1 TX (Pico → DFPlayer Mini RX)
+MP3_TX_PIN = 4           # UART1 TX (Pico -> DFPlayer Mini RX)
 MP3_RX_PIN = 5           # UART1 RX, reserved: commands are sent without feedback
 MP3_VOLUME = 25          # Volume level 0-30; one speaker for the display, retune on site
 TRACK_COUNT = 3          # Thunder tracks on the SD card (0001.mp3 ... 0003.mp3)
 
 # Test mode: every rig waits TEST_INTERVAL_S instead of its own intervalS, for bench testing
 TEST_MODE = False
-TEST_INTERVAL_S = (5, 10)
+TEST_INTERVAL_S = (1, 3)
 
 # Optional Manual Trigger
 TRIGGER_PIN = 15         # Button to 3.3 V; internal pull-down holds it low when open
@@ -179,7 +179,7 @@ class Storm:
     async def strike(self, rig):
         rig.isBusy = True
         try:
-            print("⚡ Rig", rig.name, "strikes")
+            print("Rig", rig.name, "strikes")
             self.thunder.strike()
             await executeRandomLightning(rig.strip, self.clock, self.rng)
         finally:
@@ -244,7 +244,7 @@ def start():
     clock = PicoClock()
     storm = Storm(rigs, Thunder(player, clock, random, TRACK_COUNT), clock, random)
 
-    print("🌩️  Storm running:", len(rigs), "rigs", "(test mode)" if TEST_MODE else "")
+    print("Storm running:", len(rigs), "rigs", "(test mode)" if TEST_MODE else "")
     try:
         asyncio.run(showtime(storm, led, trigger, clock))
     finally:

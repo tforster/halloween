@@ -9,14 +9,14 @@
       "id": "rigA",
       "top": -120,
       "left": 160,
-      "attrs": { "pixels": "300", "pixelSize": "2020" }
+      "attrs": { "pixels": "60", "pixelSize": "2020" }
     },
     {
       "type": "wokwi-led-strip",
       "id": "rigB",
       "top": 260,
       "left": 160,
-      "attrs": { "pixels": "300", "pixelSize": "2020" }
+      "attrs": { "pixels": "60", "pixelSize": "2020" }
     }
   ],
   "connections": [

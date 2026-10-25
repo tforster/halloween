@@ -20,7 +20,7 @@ import sys
 # ============================================================================
 # Set to False during development to prevent auto-start boot loops
 # Set to True for production deployment (autonomous operation)
-AUTO_START = True  # ⚠️ Set to False while developing to avoid boot loops
+AUTO_START = True  # Set to False while developing to avoid boot loops
 
 
 def fileExists(filename):
@@ -51,11 +51,11 @@ def main():
     
     Respects AUTO_START flag - if False, prints instructions and stops.
     """
-    print("🎃 Halloween Lightning & Thunder Effect - Boot")
+    print("Halloween Lightning & Thunder Effect - Boot")
     
     if not AUTO_START:
         print("=" * 50)
-        print("⚠️  AUTO_START = False (Debugging Mode)")
+        print("AUTO_START = False (Debugging Mode)")
         print("=" * 50)
         print()
         print("Boot paused. REPL is ready for manual testing.")
@@ -85,10 +85,10 @@ def main():
             with open('main.py') as f:
                 exec(f.read(), globals())
         except Exception as e:
-            print("❌ Error executing main.py:", e)
+            print("Error executing main.py:", e)
             sys.exit(1)
     else:
-        print("❌ main.py not found. Please upload main.py to the Pico.")
+        print("main.py not found. Please upload main.py to the Pico.")
         print("   Use: devops/deploy.sh or mpremote cp src/main.py :main.py")
         sys.exit(1)
 

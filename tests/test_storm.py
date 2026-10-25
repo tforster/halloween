@@ -17,7 +17,7 @@ import main
 from mp3_player import MP3Player
 
 PLAY_TRACK = 0x03
-GAP_MS = 1000  # Writes closer than this belong to one strike; patterns hold <= 150 ms, rigs wait >= 5 s
+GAP_MS = 500  # Writes closer than this belong to one strike; patterns hold <= 150 ms, rigs wait >= 1 s
 
 
 class FakeClock:

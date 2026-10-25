@@ -16,7 +16,7 @@ npm run lint             # oxlint
 npm run format           # oxfmt --write (JS, JSON, Markdown, TOML)
 npm run format:check     # oxfmt --check
 npm run deploy           # copy src/ to the connected Pico (mpremote)
-npm run simulate         # copy src/ into a running Wokwi simulation (wokwi/) and start it in test mode
+npm run simulate         # run src/ in a running Wokwi simulation (wokwi/) in test mode
 mpremote repl            # REPL on the Pico; Ctrl-C stops main.py
 npm run test:py          # pytest: firmware scheduler and DFPlayer frames (source activate.sh first)
 npm run lint:py          # ruff on devops/

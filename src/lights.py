@@ -7,7 +7,7 @@ scheduler interleave the frames of overlapping strikes on different strips.
 
 Hardware Requirements:
 - WS2812B NeoPixel strip (tested with 300 LEDs)
-- 3.3V→5V logic level shifter on data line
+- 3.3V->5V logic level shifter on data line
 - Adequate 5V power supply (see power calculations in docs/reference/hardware.md)
 
 Timing Considerations:

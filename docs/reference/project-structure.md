@@ -23,7 +23,7 @@ halloween/
 │   ├── deploy-dev.sh     # Copy src/ to the Pico and optionally run it
 │   ├── run.sh            # Run a file on the Pico without copying it
 │   ├── serve.sh          # Mount src/ on the Pico for live editing
-│   ├── simulate.sh       # Copy src/ into a running Wokwi simulation and start it
+│   ├── simulate.sh       # Run src/ in a running Wokwi simulation
 │   ├── prepare_audio.py  # Number MP3s for the DFPlayer
 │   ├── test_mp3_serial.py# Drive a DFPlayer from the host over USB-serial
 │   ├── includes/         # Shared bash helpers (parseArgs.sh, colours.sh)
@@ -65,7 +65,7 @@ Constants at the top of `src/main.py`:
 | `MP3_VOLUME`         | `25`         | DFPlayer volume, 0–30                                                                                                                            |
 | `TRACK_COUNT`        | `3`          | Thunder tracks on the SD card                                                                                                                    |
 | `TEST_MODE`          | `False`      | Use `TEST_INTERVAL_S` for every rig instead of its own `intervalS`                                                                               |
-| `TEST_INTERVAL_S`    | `(5, 10)`    | Wait between strikes in test mode, seconds                                                                                                       |
+| `TEST_INTERVAL_S`    | `(1, 3)`     | Wait between strikes in test mode, seconds                                                                                                       |
 | `TRIGGER_PIN`        | `15`         | Manual trigger GPIO                                                                                                                              |
 | `USE_MANUAL_TRIGGER` | `False`      | Enable the manual trigger: each press strikes a random idle rig                                                                                  |
 | `TRIGGER_POLL_MS`    | `50`         | Trigger poll period, which also debounces it                                                                                                     |

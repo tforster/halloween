@@ -44,7 +44,7 @@ testAllPatterns(17)  # classic, flickering and rolling on Rig B (GP17), blue the
 
 ## 3. Faster Strikes
 
-Set `TEST_MODE = True` in `src/main.py` and every rig strikes every 5–10 s (`TEST_INTERVAL_S`) instead of its configured interval, so overlaps are easy to see. The rigs' own intervals stay as written. Set it back to `False` before deploying.
+Set `TEST_MODE = True` in `src/main.py` and every rig strikes every 1–3 s (`TEST_INTERVAL_S`) instead of its configured interval, so overlaps are easy to see. The rigs' own intervals stay as written. Set it back to `False` before deploying.
 
 To try it without editing the file, run the storm from the REPL instead:
 
