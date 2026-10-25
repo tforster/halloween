@@ -1,0 +1,18 @@
+# Python dependencies for HOST-SIDE development tools
+# These are NOT for the Pico - MicroPython code in src/ has no dependencies
+#
+# Install with: pip install -r requirements.txt
+# Or with dev dependencies: pip install -r requirements.txt -r requirements-dev.txt
+
+# Serial communication with Pico (for devops scripts)
+pyserial>=3.5
+
+# MicroPython CLI tools for Pico development
+mpremote>=1.23.0       # Official MicroPython tool for scripting
+rshell>=0.0.32         # Interactive shell for file management
+
+# Audio file processing (convert/prepare MP3 files for DFPlayer)
+pydub>=0.25.1
+
+# Note: pydub requires ffmpeg or libav
+# Install ffmpeg: sudo apt install ffmpeg (Linux) or brew install ffmpeg (Mac)
