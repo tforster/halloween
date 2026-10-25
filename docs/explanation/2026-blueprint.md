@@ -61,7 +61,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
 26. As a developer, I want hardware objects created only at start-up and passed in, so that the same logic runs on the Pico and in tests.
 27. As a developer, I want a reduced-interval test mode, so that I can watch several strikes in a minute during bench testing.
 28. As a developer, I want `npm run deploy` to keep working for one board, so that deployment stays one command.
-29. As an AI agent, I want AGENTS.md and the Developer Guide updated for the two-rig design, so that I don't work from the three-board 2025 assumptions.
+29. As an AI agent, I want CLAUDE.md and the docs updated for the two-rig design, so that I don't work from the three-board 2025 assumptions.
 30. As an AI agent, I want each 2026 architectural choice recorded as an ADR, so that I understand why the design changed.
 31. As a trick-or-treater, I want lightning and thunder to arrive together, so that the effect is convincing.
 32. As a neighbour, I want the thunder to stay at a sensible volume, so that the display is dramatic without being a nuisance.
@@ -116,7 +116,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
 
 ### 4.3. Documentation and diagrams
 
-- **New ADRs in the Developer Guide:**
+- **New ADRs in [Architecture Decision Records](../reference/adr/README.md):**
   - ADR-009, single controller for multiple rigs.
   - ADR-010, single shared audio path with latest-strike-wins.
   - ADR-011, `asyncio` scheduling.
@@ -127,7 +127,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
   - A Wokwi project (`diagram.json`) holds a Pico 2 with two 300-pixel WS2812 strips on the real pins, running the real firmware.
   - Wokwi has no DFPlayer part, so the DFPlayer UART is watched on the serial monitor in its place.
 - **Mermaid** stays for system context, runtime flow and state diagrams.
-- **Updates:** README, AGENTS.md and the Developer Guide are updated from three boards to two rigs on one controller. The "Previous Years" table gains a 2026 row at season end.
+- **Updates:** README, CLAUDE.md and the hardware, how-to and reference docs are updated from three boards to two rigs on one controller. The "Previous Years" table gains a 2026 row at season end.
 
 ## 5. Testing Decisions
 
@@ -141,9 +141,9 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
     - A strike while thunder is playing sends a new play command and nothing queues.
     - The number of rigs follows configuration.
   - Runs with pytest (`npm run test:py` already exists).
-- **Seam 2 (DFPlayer frames):** through the MP3 player's public interface with a fake UART. Assert the exact 10-byte frames, including checksum, for play track, set volume and stop. The known-good frame for "play track 1" in AGENTS.md is the reference value.
+- **Seam 2 (DFPlayer frames):** through the MP3 player's public interface with a fake UART. Assert the exact 10-byte frames, including checksum, for play track, set volume and stop. The [known-good frames](../reference/dfplayer-protocol.md#4-known-good-frames) are the reference values. (The 2025 agent docs gave "play track 1" a wrong checksum, `FE F9`; the correct value is `FE F7`.)
 - **Seam 3 (Wokwi simulation):** a manual visual check that both strips animate, overlaps interleave and UART traffic appears at each strike. This is not run in CI unless the Wokwi CLI is adopted later.
-- **Seam 4 (bench):** a hardware checklist in the Developer Guide covering each data run at full length, thunder through the amplifier, overlap behaviour, and power under a full-white flash.
+- **Seam 4 (bench):** a hardware checklist in the how-to guides covering each data run at full length, thunder through the amplifier, overlap behaviour, and power under a full-white flash.
 - **Prior art:** none. The repo has no automated tests yet. `devops/test_mp3_serial.py` is a manual serial tester and the closest reference for DFPlayer frames.
 - **Proposed seams to confirm:** seam 1 is the only new one. It needs the hardware-at-start-up boundary described above and is the highest point at which timing and overlap can be tested without hardware.
 
