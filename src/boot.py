@@ -20,7 +20,7 @@ import sys
 # ============================================================================
 # Set to False during development to prevent auto-start boot loops
 # Set to True for production deployment (autonomous operation)
-AUTO_START = False  # ⚠️ Change to True when deploying to Halloween display
+AUTO_START = True  # ⚠️ Set to False while developing to avoid boot loops
 
 
 def fileExists(filename):

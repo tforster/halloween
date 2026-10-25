@@ -101,10 +101,10 @@ This is a Raspberry Pi Pico 2 + MicroPython project that creates synchronized li
 
 **Quick Links to Developer Guide:**
 
-- [Development Environment Setup](docs/Developer-Guide.md#development-environment-setup)
-- [DevOps Scripts & Tooling](docs/Developer-Guide.md#devops-scripts--tooling)
-- [Testing & Debugging](docs/Developer-Guide.md#testing--debugging)
-- [Known Issues & Gotchas](docs/Developer-Guide.md#known-issues--gotchas)
+- [Development Environment Setup](docs/Developer-Guide.md#3-development-environment-setup)
+- [DevOps Scripts & Tooling](docs/Developer-Guide.md#7-devops-scripts--tooling)
+- [Testing & Debugging](docs/Developer-Guide.md#6-testing--debugging)
+- [Known Issues & Gotchas](docs/Developer-Guide.md#8-known-issues--gotchas)
 
 ## 3. Development Environment
 
@@ -140,7 +140,7 @@ This is a Raspberry Pi Pico 2 + MicroPython project that creates synchronized li
 > [!note]
 >
 > Complete development environment setup instructions including prerequisites, dependencies, and daily workflow are maintained in the Developer Guide.
-> See [Development Environment Setup](docs/Developer-Guide.md#development-environment-setup) for detailed instructions.
+> See [Development Environment Setup](docs/Developer-Guide.md#3-development-environment-setup) for detailed instructions.
 
 ## 4. File Structure Context
 
@@ -150,10 +150,9 @@ This is a Raspberry Pi Pico 2 + MicroPython project that creates synchronized li
 │   ├── boot.py            # Bootstrap loader (runs on Pico startup)
 │   ├── main.py            # Main application with random triggering
 │   ├── lights.py          # NeoPixel animation module
-│   ├── mp3_player.py      # DFPlayer Mini serial interface
-│   └── test.py            # Development testing
+│   └── mp3_player.py      # DFPlayer Mini serial interface
 ├── lib/                    # (empty - using built-in modules)
-├── audio/                  # MP3 files (deployed to SD card, not Pico)
+├── audio/                  # MP3 files (gitignored; deployed to SD card, not Pico)
 │   ├── 0001.mp3           # Thunder sound 1
 │   ├── 0002.mp3           # Thunder sound 2
 │   └── 0003.mp3           # Thunder sound 3
@@ -174,13 +173,13 @@ This is a Raspberry Pi Pico 2 + MicroPython project that creates synchronized li
 
 > [!note]
 > Detailed file structure with comprehensive explanations of each directory and file is maintained in the Developer Guide.
-> See [Project File Structure](docs/Developer-Guide.md#project-file-structure) for complete details.
+> See [Project File Structure](docs/Developer-Guide.md#34-project-file-structure) for complete details.
 
 ## 5. Hardware Configuration
 
 > [!note]
 > Pin assignments are determined during development and documented in the Developer Guide.
-> See [Hardware Assembly Notes](docs/Developer-Guide.md#hardware-assembly-notes) for current pin mappings.
+> See [Hardware Assembly Notes](docs/Developer-Guide.md#4-hardware-assembly-notes) for current pin mappings.
 
 ### 5.1. Hardware Components (3x sets)
 
@@ -299,20 +298,18 @@ devops/deploy.sh
 # Connect to REPL and test modules independently
 
 # Test NeoPixels
->>> from lights import light_chaser
->>> import machine, neopixel
->>> np = neopixel.NeoPixel(machine.Pin(LED_PIN), 300)
->>> light_chaser(np)
+>>> from lights import testAllPatterns
+>>> testAllPatterns(16)
 
 # Test MP3 player
 >>> from mp3_player import MP3Player
->>> player = MP3Player(tx_pin=X, rx_pin=X)
->>> player.play_track(1)
+>>> player = MP3Player(tx_pin=4, rx_pin=5)
+>>> player.playTrack(1)
 ```
 
 > [!note]
 > Comprehensive testing procedures, debugging strategies, and detailed test cases are maintained in the Developer Guide.
-> See [Testing & Debugging](docs/Developer-Guide.md#testing--debugging) for complete details.
+> See [Testing & Debugging](docs/Developer-Guide.md#6-testing--debugging) for complete details.
 
 ## 8. Known Limitations & Gotchas
 
@@ -351,7 +348,7 @@ devops/deploy.sh
 
 > [!note]
 > Implementation-specific bugs, workarounds, and development gotchas are tracked in the Developer Guide.
-> See [Known Issues & Gotchas](docs/Developer-Guide.md#known-issues--gotchas) for current implementation issues.
+> See [Known Issues & Gotchas](docs/Developer-Guide.md#8-known-issues--gotchas) for current implementation issues.
 
 ## 9. Important Code Patterns
 
@@ -377,11 +374,11 @@ uart.write(cmd)
 
 > [!note]
 > Implementation-specific code patterns and examples are maintained in the Developer Guide.
-> See [Code Structure](docs/Developer-Guide.md#code-structure) for detailed code patterns and configuration options.
+> See [Code Structure](docs/Developer-Guide.md#5-code-structure) for detailed code patterns and configuration options.
 
 > [!note]
 > Detailed migration notes from the 2024 ESP32 implementation are documented in the Developer Guide.
-> See [ADR-005: Migration from ESP32 to Raspberry Pi Pico 2](docs/Developer-Guide.md#adr-005-migration-from-esp32-to-raspberry-pi-pico-2-2025) for complete comparison and rationale.
+> See [ADR-005: Migration from ESP32 to Raspberry Pi Pico 2](docs/Developer-Guide.md#11-adr-005-migration-from-esp32-to-raspberry-pi-pico-2-2025) for complete comparison and rationale.
 
 ## 10. Future Development Notes
 
@@ -390,7 +387,7 @@ uart.write(cmd)
 - ✅ Multi-board deployment (3 units)
 - ✅ Autonomous random triggering
 - ✅ Higher quality audio (MP3 vs. WAV)
-- ⏳ Multiple lightning patterns (stretch goal)
+- ✅ Multiple lightning patterns (classic, flickering, rolling)
 
 ## 11. Git Workflow
 

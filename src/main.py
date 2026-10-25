@@ -53,8 +53,8 @@ MP3_VOLUME = 25          # Volume level 0-30 (25 recommended for 60W amp)
 TRACK_COUNT = 3          # Number of thunder tracks (0001.mp3, 0002.mp3, 0003.mp3)
 
 # Timing Configuration
-MIN_INTERVAL = 20        # Minimum seconds between effects (production: 60)
-MAX_INTERVAL = 45       # Maximum seconds between effects (production: 120)
+MIN_INTERVAL = 60        # Minimum seconds between effects
+MAX_INTERVAL = 120       # Maximum seconds between effects
 COOLDOWN_PERIOD = 5      # Seconds to wait after effect before next trigger
 
 # Testing Configuration

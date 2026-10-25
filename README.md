@@ -29,11 +29,11 @@ A Raspberry Pi Pico 2-based Halloween display controller that creates synchronis
 
 **Software:**
 
-- VS Code with [Raspberry Pi Pico extension](https://marketplace.visualstudio.com/items?itemName=raspberry-pi.raspberry-pi-pico)
+- mpremote (installed via `requirements.txt`)
 - Python 3.13+
 - Node.js/npm
 
-> 📖 **Full hardware details and assembly:** [Developer Guide - Hardware Assembly](docs/Developer-Guide.md#hardware-assembly-notes)
+> 📖 **Full hardware details and assembly:** [Developer Guide - Hardware Assembly](docs/Developer-Guide.md#4-hardware-assembly-notes)
 
 ### Installation
 
@@ -49,20 +49,18 @@ python3.13 -m venv venv
 source venv/bin/activate  # or: source activate.sh
 pip install -r requirements.txt
 
-# 3. Configure VS Code
-# Install Raspberry Pi Pico extension
-# Press Ctrl+Shift+P → "MicroPython: Configure Project"
-# Select "Raspberry Pi Pico 2"
+# 3. Flash MicroPython firmware (first time only)
+# Hold BOOTSEL, connect USB, drag devops/image/RPI_PICO2-*.uf2 onto the Pico drive
 
 # 4. Prepare audio files
 python devops/prepare_audio.py
 # Copy audio/prepared/*.mp3 to MicroSD card
 
-# 5. Upload to Pico
-# Right-click src/ folder → "Upload to Pico"
+# 5. Upload to Pico (uses mpremote)
+npm run deploy
 ```
 
-> 📖 **Detailed setup instructions:** [Developer Guide - Development Environment Setup](docs/Developer-Guide.md#development-environment-setup)
+> 📖 **Detailed setup instructions:** [Developer Guide - Development Environment Setup](docs/Developer-Guide.md#3-development-environment-setup)
 
 ## Usage
 
@@ -70,7 +68,7 @@ python devops/prepare_audio.py
 
 **Triggered Mode** (optional): Connect a switch/sensor to trigger effects manually.
 
-> 📖 **Configuration, testing, and debugging:** [Developer Guide - Testing & Debugging](docs/Developer-Guide.md#testing--debugging)
+> 📖 **Configuration, testing, and debugging:** [Developer Guide - Testing & Debugging](docs/Developer-Guide.md#6-testing--debugging)
 
 ## Architecture
 
@@ -86,7 +84,7 @@ python devops/prepare_audio.py
 - `devops/prepare_audio.py` - Prepare MP3 files for DFPlayer
 - `devops/test_mp3_serial.py` - Test MP3 module communication
 
-> 📖 **Complete architecture and ADRs:** [Developer Guide - Architecture Decision Records](docs/Developer-Guide.md#architecture-decision-records-adrs)
+> 📖 **Complete architecture and ADRs:** [Developer Guide - Architecture Decision Records](docs/Developer-Guide.md#1-architecture-decision-records-adrs)
 
 ## Documentation
 

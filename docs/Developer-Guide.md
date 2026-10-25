@@ -13,7 +13,7 @@ A living document of design decisions, challenges, and solutions for the Hallowe
   - [1.2. ADR-006: External MP3 Player Module for Audio](#12-adr-006-external-mp3-player-module-for-audio)
   - [1.3. ADR-007: Random Interval Autonomous Triggering](#13-adr-007-random-interval-autonomous-triggering)
   - [1.4. ADR-008: Multi-Board Independent Operation](#14-adr-008-multi-board-independent-operation)
-- [2. Technical Challenges \& Solutions](#2-technical-challenges--solutions)
+- [2. Technical Challenges & Solutions](#2-technical-challenges--solutions)
   - [2.1. Challenge: DFPlayer Mini Serial Communication](#21-challenge-dfplayer-mini-serial-communication)
   - [2.2. Challenge: MP3 File Naming Convention](#22-challenge-mp3-file-naming-convention)
   - [2.3. Challenge: Power Distribution for Three Boards](#23-challenge-power-distribution-for-three-boards)
@@ -25,25 +25,24 @@ A living document of design decisions, challenges, and solutions for the Hallowe
   - [3.4. Project File Structure](#34-project-file-structure)
   - [3.5. MicroPython on Pico 2](#35-micropython-on-pico-2)
 - [4. Hardware Assembly Notes](#4-hardware-assembly-notes)
-  - [Pin Assignments (Final Configuration)](#pin-assignments-final-configuration)
-  - [Wiring Diagrams](#wiring-diagrams)
-    - [Complete System Wiring (Dual 5V Supply Configuration)](#complete-system-wiring-dual-5v-supply-configuration)
-    - [Level Shifter Detail](#level-shifter-detail)
-    - [DFPlayer Mini Wiring Detail](#dfplayer-mini-wiring-detail)
-  - [Power Supply Specifications](#power-supply-specifications)
-    - [Component Power Requirements](#component-power-requirements)
-    - [Recommended Power Supplies (Per Board)](#recommended-power-supplies-per-board)
-    - [Dual Supply Wiring Diagram](#dual-supply-wiring-diagram)
-    - [Safety Considerations](#safety-considerations)
-    - [Multi-Board Deployment (3 Boards Total)](#multi-board-deployment-3-boards-total)
+  - [4.1. Pin Assignments (Final Configuration)](#41-pin-assignments-final-configuration)
+  - [4.2. Wiring Diagrams](#42-wiring-diagrams)
+    - [4.2.1. Complete System Wiring (Dual 5V Supply Configuration)](#421-complete-system-wiring-dual-5v-supply-configuration)
+    - [4.2.2. Level Shifter Detail](#422-level-shifter-detail)
+    - [4.2.3. DFPlayer Mini Wiring Detail](#423-dfplayer-mini-wiring-detail)
+  - [4.3. Power Supply Specifications](#43-power-supply-specifications)
+    - [4.3.1. Component Power Requirements](#431-component-power-requirements)
+    - [4.3.2. Recommended Power Supplies (Per Board)](#432-recommended-power-supplies-per-board)
+    - [4.3.3. Dual Supply Wiring Diagram](#433-dual-supply-wiring-diagram)
+    - [4.3.4. Safety Considerations](#434-safety-considerations)
+    - [4.3.5. Multi-Board Deployment (3 Boards Total)](#435-multi-board-deployment-3-boards-total)
 - [5. Code Structure](#5-code-structure)
-- [6. Testing \& Debugging](#6-testing--debugging)
-- [7. DevOps Scripts \& Tooling](#7-devops-scripts--tooling)
+- [6. Testing & Debugging](#6-testing--debugging)
+- [7. DevOps Scripts & Tooling](#7-devops-scripts--tooling)
   - [7.1. MP3 Serial Communication Tester](#71-mp3-serial-communication-tester)
   - [7.2. Python Code Quality Tools](#72-python-code-quality-tools)
   - [7.3. Adding New DevOps Scripts](#73-adding-new-devops-scripts)
-- [8. TODO List](#8-todo-list)
-- [9. Known Issues \& Gotchas](#9-known-issues--gotchas)
+- [8. Known Issues & Gotchas](#8-known-issues--gotchas)
 
 ## 1. Architecture Decision Records (ADRs)
 
@@ -76,7 +75,7 @@ Migrate to Raspberry Pi Pico 2 with dedicated MP3 player module for 2025 season.
 | **Cost per Unit**   | ~$10-12 (ESP32 alone)             | ~$6 (Pico 2) + $3 (MP3 module) = $9 |
 | **Scaling**         | Single unit (costly to replicate) | 3 units (cost-effective)            |
 | **Memory**          | ~160KB usable RAM                 | ~520KB SRAM                         |
-| **Development**     | esptool, ampy, mpremote           | VS Code Pico extension              |
+| **Development**     | esptool, ampy, mpremote           | mpremote via `devops/` scripts      |
 
 **Rationale:**
 
@@ -84,7 +83,7 @@ Migrate to Raspberry Pi Pico 2 with dedicated MP3 player module for 2025 season.
 - **Simpler code:** No manual audio parsing, streaming, or DAC management
 - **Better audio management:** Easy to add/change sounds via SD card
 - **More cost-effective:** Lower total cost enables 3-board deployment
-- **Easier development:** VS Code Pico extension provides integrated tooling
+- **Easier development:** mpremote wrapped in `devops/` scripts (`npm run deploy`, `npm run run`)
 - **Future-proof:** More memory headroom for additional features
 - **Better availability:** Pico 2 easier to source than ESP32
 
@@ -239,7 +238,7 @@ DFPlayer Mini uses proprietary serial protocol with checksums and specific comma
 - `0x06`: Set volume (0-30)
 - `0x3F`: Initialize module
 
-**Code Reference:** `mp3_player.py` (to be created)
+**Code Reference:** `src/mp3_player.py`
 
 ### 2.2. Challenge: MP3 File Naming Convention
 
@@ -319,16 +318,17 @@ git checkout 2025
 # 2. Install Node.js dependencies (for linting/formatting)
 npm install
 
-# Note that venv is not used since the local src folder will be synchronised to the Pico 2 directly.
+# 3. Create and activate a virtual environment for host-side tools (mpremote, pyserial, pydub)
+python3.13 -m venv venv
+source activate.sh
 
-# 5. Install Python dependencies
+# 4. Install Python dependencies
 pip install -r requirements.txt
 
-# 6. Install development dependencies (optional)
+# 5. Install development dependencies (optional)
 pip install -r requirements-dev.txt
 
-# 7. Install VS Code extensions
-# - Raspberry Pi Pico (raspberry-pi.raspberry-pi-pico)
+# 6. Install VS Code extensions
 # - Markdown All In One (yzhang.markdown-all-in-one)
 ```
 
@@ -349,7 +349,7 @@ brew install ffmpeg
 
 > [!note]
 > Common development procedures (flashing firmware, uploading files, preparing audio) are documented in AGENTS.md.
-> See [Common Development Tasks](../AGENTS.md#common-development-tasks) for step-by-step instructions.
+> See [Common Development Tasks](../AGENTS.md#7-common-development-tasks) for step-by-step instructions.
 
 **Every time you work on the project:**
 
@@ -480,9 +480,9 @@ npm run test:py             # Run pytest tests
 
 > [!note]
 > Hardware component specifications, purchase links, and datasheets are maintained in AGENTS.md.
-> See [Hardware Configuration](../AGENTS.md#hardware-configuration) for complete details.
+> See [Hardware Configuration](../AGENTS.md#5-hardware-configuration) for complete details.
 
-### Pin Assignments (Final Configuration)
+### 4.1. Pin Assignments (Final Configuration)
 
 | GPIO Pin | Function       | Direction | Hardware Connection                | Rationale                                                    |
 | -------- | -------------- | --------- | ---------------------------------- | ------------------------------------------------------------ |
@@ -499,9 +499,9 @@ npm run test:py             # Run pytest tests
 - **GPIO 15**: Readily available for future expansion features
 - **All pins verified** against [Pico 2 Datasheet](https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf)
 
-### Wiring Diagrams
+### 4.2. Wiring Diagrams
 
-#### Complete System Wiring (Dual 5V Supply Configuration)
+#### 4.2.1. Complete System Wiring (Dual 5V Supply Configuration)
 
 ```text
 5V Supply 1 (8A)              5V Supply 2 (8A)              12V Supply (5A)
@@ -545,7 +545,7 @@ Key Connections:
   • Audio: DFPlayer SPK_1/SPK_2 → Amplifier Input
 ```
 
-#### Level Shifter Detail
+#### 4.2.2. Level Shifter Detail
 
 ```text
 Level Shifter (Bidirectional)
@@ -561,7 +561,7 @@ Level Shifter (Bidirectional)
 └────────────────────────────┘
 ```
 
-#### DFPlayer Mini Wiring Detail
+#### 4.2.3. DFPlayer Mini Wiring Detail
 
 ```text
 DFPlayer Mini Module (Top View)
@@ -584,9 +584,9 @@ Note: Use either SPK pins OR 3.5mm jack, not both
       SPK pins provide higher quality output to amplifier
 ```
 
-### Power Supply Specifications
+### 4.3. Power Supply Specifications
 
-#### Component Power Requirements
+#### 4.3.1. Component Power Requirements
 
 | Component               | Voltage   | Typical Current    | Maximum Current | Notes                                      |
 | ----------------------- | --------- | ------------------ | --------------- | ------------------------------------------ |
@@ -596,7 +596,7 @@ Note: Use either SPK pins OR 3.5mm jack, not both
 | **Logic Level Shifter** | 5V + 3.3V | <10mA              | 50mA            | Bidirectional, minimal power               |
 | **60W Amplifier**       | 12V       | Variable           | 5A (60W/12V)    | Separate power required                    |
 
-#### Recommended Power Supplies (Per Board)
+#### 4.3.2. Recommended Power Supplies (Per Board)
 
 **⚠️ CRITICAL: Use Dual 5V Supplies for Reliable NeoPixel Operation**
 
@@ -612,8 +612,6 @@ A single 5V 8A supply powering 300 NeoPixels over 5 meters causes:
 **Solution: Split into Two Segments**
 
 Each 150-pixel segment gets its own supply → eliminates voltage drop, distributes load.
-
----
 
 **Power Supply 1: 5V 8A for Logic + Pixels 1-150**
 
@@ -652,7 +650,7 @@ Each 150-pixel segment gets its own supply → eliminates voltage drop, distribu
 - **Ground:** Connect to common ground with 5V supplies
 - **Wire Gauge:** 18 AWG adequate
 
-#### Dual Supply Wiring Diagram
+#### 4.3.3. Dual Supply Wiring Diagram
 
 ```text
 Supply 1 (5V 8A)              Supply 2 (5V 8A)              Supply 3 (12V 5A)
@@ -688,7 +686,7 @@ Supply 1 (5V 8A)              Supply 2 (5V 8A)              Supply 3 (12V 5A)
    - Minimize distance from supply to injection point
    - Use stranded wire for flexibility
 
-#### Safety Considerations
+#### 4.3.4. Safety Considerations
 
 **Fusing:**
 
@@ -716,7 +714,7 @@ Supply 1 (5V 8A)              Supply 2 (5V 8A)              Supply 3 (12V 5A)
 - Use stranded wire for flexibility
 - Keep power wires as short as practical
 
-#### Multi-Board Deployment (3 Boards Total)
+#### 4.3.5. Multi-Board Deployment (3 Boards Total)
 
 **Total Power Requirements:**
 
@@ -767,10 +765,6 @@ If using Canaduino with 3.3V rails:
   - Use Canaduino 3.3V rail for Pico LV (low voltage)
   - Maintains 5V data signal for maximum noise immunity
 
-**Pin Assignments (Replaced - See Table Above):**
-
--
-
 ## 5. Code Structure
 
 ```text
@@ -789,12 +783,10 @@ src/
 │                        # - Batched updates (40 pixels)
 │                        # - Standalone testing
 │
-├── mp3_player.py        # MP3 player module interface
+└── mp3_player.py        # MP3 player module interface
 │                        # - DFPlayer Mini serial protocol
 │                        # - Track playback control
 │                        # - Volume management
-│
-└── test.py              # Development testing script
 
 lib/
 └── (none required - using built-in modules)
@@ -808,15 +800,17 @@ audio/
 
 > [!note]
 > Code style conventions and naming guidelines are maintained in AGENTS.md.
-> See [Code Style & Conventions](../AGENTS.md#code-style--conventions) for complete details.
+> See [Code Style & Conventions](../AGENTS.md#6-code-style--conventions) for complete details.
 
 **Key Configuration Variables (main.py):**
 
 - `LED_COUNT = 300`: Number of NeoPixels
-- `LED_PIN = X`: GPIO for NeoPixel data
-- `MP3_TX_PIN = X`: GPIO for MP3 module TX
-- `MP3_RX_PIN = X`: GPIO for MP3 module RX
-- `TRIGGER_PIN = X`: GPIO for manual trigger (optional)
+- `LED_PIN = 16`: GPIO for NeoPixel data
+- `MP3_TX_PIN = 4`: GPIO for MP3 module TX
+- `MP3_RX_PIN = 5`: GPIO for MP3 module RX
+- `TRIGGER_PIN = 15`: GPIO for manual trigger (optional, enable with `USE_MANUAL_TRIGGER`)
+- `MP3_VOLUME = 25`: DFPlayer volume (0-30)
+- `TRACK_COUNT = 3`: Number of tracks on the SD card
 - `MIN_INTERVAL = 60`: Minimum seconds between effects
 - `MAX_INTERVAL = 120`: Maximum seconds between effects
 
@@ -825,12 +819,11 @@ audio/
 **Standalone NeoPixel Testing:**
 
 ```python
-# In REPL or test.py
-from lights import light_chaser
-import machine, neopixel
+# In REPL
+from lights import testLightning, testAllPatterns
 
-np = neopixel.NeoPixel(machine.Pin(LED_PIN), 300)
-light_chaser(np, wait_ms=2, batch_size=40)
+testLightning(16)    # Single random strike on GP16
+testAllPatterns(16)  # Classic, flickering and rolling in turn
 ```
 
 **MP3 Player Testing:**
@@ -839,9 +832,9 @@ light_chaser(np, wait_ms=2, batch_size=40)
 # In REPL
 from mp3_player import MP3Player
 
-player = MP3Player(tx_pin=X, rx_pin=X)
-player.play_track(1)  # Play 0001.mp3
-player.set_volume(20)  # Volume 0-30
+player = MP3Player(tx_pin=4, rx_pin=5)
+player.setVolume(20)  # Volume 0-30
+player.playTrack(1)   # Play 0001.mp3
 ```
 
 **Random Interval Testing:**
@@ -971,28 +964,11 @@ mpremote cp src/mp3_player.py :mp3_player.py
 - ✅ Upload all required files (`boot.py`, `main.py`, `lights.py`, `mp3_player.py`)
 - ✅ Power cycle Pico to run from `boot.py`
 
-## 8. TODO List
-
-This is a high level todo list for now.
-
-- [ ] SD Cards
-  - [ ] Format as FAT32 x3
-  - [ ] Copy prepared audio files x3
-- [ ] Amplifier
-  - [ ] Solder connection blocks
-  - [ ] Connect female barrel jacks
-  - [ ] Connect to MP3 module audio out
-  - [ ] Connect to speaker input
-- [ ] defg
-- [ ] hijk
-
-4. [ ]
-
-## 9. Known Issues & Gotchas
+## 8. Known Issues & Gotchas
 
 > [!note]
 > Hardware and protocol-level constraints are documented in AGENTS.md.
-> See [Known Limitations & Gotchas](../AGENTS.md#known-limitations--gotchas) for hardware-specific constraints.
+> See [Known Limitations & Gotchas](../AGENTS.md#8-known-limitations--gotchas) for hardware-specific constraints.
 
 **This section tracks implementation-specific issues discovered during development:**
 
@@ -1045,4 +1021,4 @@ This is a high level todo list for now.
 
 > [!note]
 > Hardware component specifications, purchase links, datasheets, and resource documentation are maintained in AGENTS.md.
-> See [Hardware Resource Links](../AGENTS.md#hardware-resource-links) for complete details.
+> See [Hardware Resource Links](../AGENTS.md#13-hardware-resource-links) for complete details.
