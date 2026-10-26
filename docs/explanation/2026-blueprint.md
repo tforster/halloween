@@ -96,23 +96,27 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
 
 - **Concurrency:**
   - `asyncio` replaces the 2025 blocking loop.
-  - Each rig runs as an independent task: wait a random interval, strike, repeat.
+  - Each rig runs as an independent task: wait a random interval, strike, repeat. The interval runs from the end of one strike to the start of the next; the 2025 thunder wait and cooldown are dropped, because thunder plays on independently.
+  - The clock (`now`, `since`, `sleep`) is passed in like the hardware: `clock.py` on the Pico, a virtual clock in tests.
   - Lightning patterns become coroutines that yield between frames, so overlapping strikes on both rigs interleave frame by frame.
   - A full 300-pixel write takes about 9 ms and blocks. Two rigs interleaved still give roughly 55 frames per second, which is enough for lightning. The second core is not used.
 - **Rig:** a rig owns one strip, its pixel count and its interval range. The rigs are a list in configuration, so one, two or more need no code change.
 - **Thunder:**
   - One shared thunder channel wraps the single DFPlayer.
   - Every strike asks it to play a random track. If a track is already playing, the new request replaces it ("latest strike wins"); nothing queues.
-  - Commands go out with the existing minimum spacing between DFPlayer commands.
+  - Commands go out with the existing minimum spacing between DFPlayer commands (100 ms). The channel keeps it with an `await`, not a sleep: a strike inside the gap waits out the remainder, and a newer strike during that wait replaces the waiting track.
+  - The MP3 player no longer sleeps between commands, so it cannot stall the strips; its blocking wake-up sequence runs once at start-up.
 - **Patterns:**
-  - The 2025 patterns are reused: classic, flickering and rolling, chosen at random, with a 10% chance of a red strike.
+  - The 2025 patterns are reused: classic, flickering and rolling, chosen at random, with a 10% chance of a red strike. (The 2025 code actually used 20%; 2026 corrects it to the documented 10%.)
   - Their visual behaviour does not change; only how they yield control between frames does.
 - **Hardware boundary:**
   - Strips, the UART, the clock and the random source are created once at start-up and passed into the rigs and the thunder channel.
   - Nothing below start-up imports hardware modules, so the same logic runs under host Python with fakes.
-- **DFPlayer protocol:** the existing MP3 player module is kept. Its public interface (play track, set volume, stop) does not change.
+- **DFPlayer protocol:** the existing MP3 player module is kept. Its public interface (play track, set volume, stop) does not change; its constructor now takes the UART instead of pins. It prints each frame it sends, which stands in for the DFPlayer in simulation.
 - **Start-up:** autonomous start on boot stays on by default. A reduced-interval test mode is a configuration switch, not an edit to the interval constants.
-- **Manual trigger:** when enabled, a press fires one strike on a randomly chosen rig, going through the same strike path as a timer.
+- **Manual trigger:** when enabled, a press fires one strike on a randomly chosen idle rig, going through the same strike path as a timer. It fires on the press edge (a 50 ms poll that also debounces), a press while every rig is striking is ignored, and rig timers are not reset. A rig's timer that fires during a manual strike on it waits for that strike to end, then starts a fresh interval.
+- **Status LED:** solid during start-up, then a 1 Hz heartbeat from its own task, so a stalled scheduler shows as an LED that stops blinking.
+- **Random seed:** from `os.urandom` (hardware entropy), not `time.ticks_ms()`, which repeats across boots.
 
 ### 4.3. Documentation and diagrams
 
@@ -124,7 +128,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
 - **Superseded ADR:** ADR-008 (independent multi-board) is marked superseded by ADR-009.
 - **WireViz:** the installation wiring is a YAML harness file in the repo. It covers supplies, fuses, Pico, level shifter, DFPlayer, amplifier, speaker and both strips' power injection and data. The rendered SVG is committed next to it, because GitHub does not render WireViz itself.
 - **Wokwi:**
-  - A Wokwi project (`diagram.json`) holds a Pico 2 with two 300-pixel WS2812 strips on the real pins, running the real firmware.
+  - A Wokwi project (`wokwi/diagram.json`, `wokwi/wokwi.toml`) holds a Pico 2 with two WS2812 strips on the real pins (60 pixels each, because two 300-pixel strips simulate at about 4% of real time), running the real firmware on the stock MicroPython image. `npm run simulate` mounts `src/` from the host over RFC 2217 (the simulated flash is not writable) and starts the storm in test mode.
   - Wokwi has no DFPlayer part, so the DFPlayer UART is watched on the serial monitor in its place.
 - **Mermaid** stays for system context, runtime flow and state diagrams.
 - **Updates:** README, CLAUDE.md and the hardware, how-to and reference docs are updated from three boards to two rigs on one controller. The "Previous Years" table gains a 2026 row at season end.
@@ -144,7 +148,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
 - **Seam 2 (DFPlayer frames):** through the MP3 player's public interface with a fake UART. Assert the exact 10-byte frames, including checksum, for play track, set volume and stop. The [known-good frames](../reference/dfplayer-protocol.md#4-known-good-frames) are the reference values. (The 2025 agent docs gave "play track 1" a wrong checksum, `FE F9`; the correct value is `FE F7`.)
 - **Seam 3 (Wokwi simulation):** a manual visual check that both strips animate, overlaps interleave and UART traffic appears at each strike. This is not run in CI unless the Wokwi CLI is adopted later.
 - **Seam 4 (bench):** a hardware checklist in the how-to guides covering each data run at full length, thunder through the amplifier, overlap behaviour, and power under a full-white flash.
-- **Prior art:** none. The repo has no automated tests yet. `devops/test_mp3_serial.py` is a manual serial tester and the closest reference for DFPlayer frames.
+- **Prior art:** none before 2026. `devops/test_mp3_serial.py` is a manual serial tester and the closest reference for DFPlayer frames. Seams 1 and 2 are now `tests/test_storm.py` and `tests/test_mp3_player.py`.
 - **Proposed seams to confirm:** seam 1 is the only new one. It needs the hardware-at-start-up boundary described above and is the highest point at which timing and overlap can be tested without hardware.
 
 ## 6. Out of Scope

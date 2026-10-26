@@ -28,7 +28,8 @@
     "serve:stop": "devops/serve.sh --stop",
     "run": "devops/run.sh",
     "run:repl": "devops/run.sh --repl",
-    "deploy": "devops/deploy.sh"
+    "deploy": "devops/deploy.sh",
+    "simulate": "devops/simulate.sh"
   },
   "devDependencies": {
     "oxfmt": "^0.73.0",

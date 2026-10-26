@@ -1,411 +1,276 @@
 """
 Halloween Lightning & Thunder Effect - Main Application
 
-Autonomous lightning and thunder effect system using:
-- Raspberry Pi Pico 2 (RP2350)
-- 300 WS2812B NeoPixels for lightning animation
-- DFPlayer Mini MP3 module for thunder sounds
-- Random interval triggering (60-120 seconds)
+One Raspberry Pi Pico 2 drives several lightning rigs. Each rig owns a WS2812B strip and strikes
+on its own random timer; one DFPlayer Mini plays thunder for all of them, and the latest strike
+wins: a new strike replaces thunder that is already playing. See
+docs/explanation/2026-blueprint.md.
 
 Hardware Configuration:
-- GPIO 16: NeoPixel data (via 3.3V→5V level shifter)
-- GPIO 4:  MP3 player TX (Pico → DFPlayer Mini RX)
-- GPIO 5:  MP3 player RX (Pico ← DFPlayer Mini TX)
+- GPIO 16: Rig A NeoPixel data (via 74AHCT125 level shifter)
+- GPIO 17: Rig B NeoPixel data (adjacent pin, also PIO-capable)
+- GPIO 4:  UART1 TX -> DFPlayer Mini RX
+- GPIO 5:  UART1 RX (reserved; no feedback is read)
 - GPIO 15: Optional manual trigger (pull-down, active high)
+- GPIO 25: Onboard LED, heartbeat while the scheduler runs
 
-Power Requirements:
-- 5V 8A supply for Pico + NeoPixels + MP3 module
-- 12V 5A supply for amplifier (separate)
-- Common ground between all components
-
-System Behaviour:
-1. On startup, initialise all hardware
-2. Enter main loop with random interval timer
-3. Every 60-120 seconds, trigger lightning + thunder effect
-4. Lightning and thunder synchronised for realistic storm effect
-5. Optional manual trigger for testing/demonstration
-
-For testing, reduce intervals to 5-10 seconds in configuration below.
+Concurrency:
+asyncio, one task per rig. Lightning patterns await the clock between frames, so overlapping
+strikes on different strips interleave frame by frame. Hardware (strips, UART, pins) is created
+only in start(); everything above it takes fakes under host pytest.
 """
 
-import machine
-import neopixel
-import time
-import random
-from lights import executeRandomLightning, clearLights
-from lights import testLightning as _lights_testLightning, testAllPatterns as _lights_testAllPatterns
-from mp3_player import MP3Player
+import asyncio
+
+from lights import executeRandomLightning
+from mp3_player import CMD_DELAY_MS
 
 # ============================================================================
 # CONFIGURATION CONSTANTS
 # ============================================================================
-# Modify these values to customise system behaviour
 
-# NeoPixel Configuration
-LED_COUNT = 300          # Number of NeoPixels in strip
-LED_PIN = 16             # GPIO pin for NeoPixel data (via level shifter)
-LED_BATCH_SIZE = 40      # Pixels per update batch (memory optimisation)
+# One entry per rig. Add or remove entries to change the number of rigs; no code changes.
+# Pins are GPIO numbers; intervalS is the (min, max) wait in seconds after a strike ends.
+RIGS = [
+    {"name": "A", "pin": 16, "pixels": 300, "intervalS": (60, 120)},
+    {"name": "B", "pin": 17, "pixels": 300, "intervalS": (60, 120)},
+]
 
 # MP3 Player Configuration
-MP3_TX_PIN = 4           # GPIO pin for UART TX (Pico → DFPlayer Mini RX)
-MP3_RX_PIN = 5           # GPIO pin for UART RX (Pico ← DFPlayer Mini TX)
-MP3_VOLUME = 25          # Volume level 0-30 (25 recommended for 60W amp)
-TRACK_COUNT = 3          # Number of thunder tracks (0001.mp3, 0002.mp3, 0003.mp3)
+MP3_TX_PIN = 4           # UART1 TX (Pico -> DFPlayer Mini RX)
+MP3_RX_PIN = 5           # UART1 RX, reserved: commands are sent without feedback
+MP3_VOLUME = 25          # Volume level 0-30; one speaker for the display, retune on site
+TRACK_COUNT = 3          # Thunder tracks on the SD card (0001.mp3 ... 0003.mp3)
 
-# Timing Configuration
-MIN_INTERVAL = 60        # Minimum seconds between effects
-MAX_INTERVAL = 120       # Maximum seconds between effects
-COOLDOWN_PERIOD = 5      # Seconds to wait after effect before next trigger
-
-# Testing Configuration
-# For faster testing, uncomment these lines:
-# MIN_INTERVAL = 5       # 5 seconds for testing
-# MAX_INTERVAL = 10      # 10 seconds for testing
+# Test mode: every rig waits TEST_INTERVAL_S instead of its own intervalS, for bench testing
+TEST_MODE = False
+TEST_INTERVAL_S = (1, 3)
 
 # Optional Manual Trigger
-TRIGGER_PIN = 15         # GPIO pin for manual trigger button (optional)
-USE_MANUAL_TRIGGER = False  # Set to True to enable manual trigger
+TRIGGER_PIN = 15         # Button to 3.3 V; internal pull-down holds it low when open
+USE_MANUAL_TRIGGER = False
+TRIGGER_POLL_MS = 50     # Poll period; also debounces, as contact bounce settles within it
+
+# How often a rig whose timer fired mid-strike checks whether the strike has ended
+FRAME_POLL_MS = 10
+
+# Set by devops/simulate.sh. Wokwi's Pico 2 hangs inside machine.UART(1, ...) and has no
+# DFPlayer part, so a simulated run sends frames nowhere; MP3Player still prints each one
+SIMULATED = False
 
 # Status LED (onboard Pico LED)
-STATUS_LED_PIN = 25      # GPIO 25 (onboard LED for status indication)
-
-# ============================================================================
-# HARDWARE INITIALISATION
-# ============================================================================
-
-# Lazy singletons for REPL/testing convenience
-_np_singleton = None
-_mp3_singleton = None
-_status_led_singleton = None
-
-def _get_neopixels():
-    """
-    Lazy-initialise a NeoPixel instance using LED_PIN/LED_COUNT.
-    Safe to call multiple times; reuses the same object.
-    """
-    global _np_singleton
-    if _np_singleton is None:
-        led_pin = machine.Pin(LED_PIN, machine.Pin.OUT)
-        _np_singleton = neopixel.NeoPixel(led_pin, LED_COUNT)
-        clearLights(_np_singleton, LED_BATCH_SIZE)
-    return _np_singleton
-
-def _get_status_led():
-    """
-    Lazy-initialise the onboard status LED (GPIO 25).
-    """
-    global _status_led_singleton
-    if _status_led_singleton is None:
-        _status_led_singleton = machine.Pin(STATUS_LED_PIN, machine.Pin.OUT)
-        _status_led_singleton.off()
-    return _status_led_singleton
-
-def _get_mp3_player():
-    """
-    Lazy-initialise the MP3 player using configured pins and volume.
-    Safe to call multiple times; reuses the same object.
-    """
-    global _mp3_singleton
-    if _mp3_singleton is None:
-        _mp3_singleton = MP3Player(MP3_TX_PIN, MP3_RX_PIN)
-        _mp3_singleton.setVolume(MP3_VOLUME)
-    return _mp3_singleton
-
-def initialiseHardware():
-    """
-    Initialise all hardware components.
-    
-    Returns:
-        Tuple of (neopixels, mp3_player, status_led, trigger_button)
-        trigger_button will be None if USE_MANUAL_TRIGGER is False
-    
-    Raises:
-        Exception if hardware initialisation fails
-    """
-    print("🎃 Halloween Lightning & Thunder Effect System")
-    print("=" * 50)
-    print()
-    
-    # Initialise status LED
-    print("💡 Initialising status LED...")
-    status_led = machine.Pin(STATUS_LED_PIN, machine.Pin.OUT)
-    status_led.on()  # LED on during initialisation
-    print(f"✅ Status LED ready (GPIO {STATUS_LED_PIN})")
-    print()
-    
-    # Initialise NeoPixels
-    print(f"🌈 Initialising {LED_COUNT} NeoPixels...")
-    print(f"   Pin: GPIO {LED_PIN}")
-    print(f"   Batch size: {LED_BATCH_SIZE} pixels")
-    led_pin = machine.Pin(LED_PIN, machine.Pin.OUT)
-    neopixels = neopixel.NeoPixel(led_pin, LED_COUNT)
-    
-    # Clear all pixels to start
-    clearLights(neopixels, LED_BATCH_SIZE)
-    print("✅ NeoPixels initialised and cleared")
-    print()
-    
-    # Initialise MP3 player
-    print("🎵 Initialising MP3 player...")
-    mp3_player = MP3Player(MP3_TX_PIN, MP3_RX_PIN)
-    mp3_player.setVolume(MP3_VOLUME)
-    print(f"✅ MP3 player ready (Volume: {MP3_VOLUME}/30)")
-    print()
-    
-    # Initialise manual trigger (if enabled)
-    trigger_button = None
-    if USE_MANUAL_TRIGGER:
-        print("🔘 Initialising manual trigger button...")
-        print(f"   Pin: GPIO {TRIGGER_PIN} (pull-down, active high)")
-        # Configure as input with pull-down (button connects to 3.3V)
-        trigger_button = machine.Pin(TRIGGER_PIN, machine.Pin.IN, machine.Pin.PULL_DOWN)
-        print("✅ Manual trigger enabled")
-        print()
-    
-    status_led.off()  # LED off after successful initialisation
-    
-    print("=" * 50)
-    print("✅ All hardware initialised successfully")
-    print()
-    
-    return neopixels, mp3_player, status_led, trigger_button
+STATUS_LED_PIN = 25
 
 
 # ============================================================================
-# EFFECT TRIGGERING
+# RIGS, THUNDER AND THE STORM
 # ============================================================================
 
-def triggerEffect(neopixels, mp3_player, status_led):
+
+class Rig:
+    """One strip and its strike interval. isBusy is set while a strike is animating."""
+
+    def __init__(self, name, strip, intervalS):
+        self.name = name
+        self.strip = strip
+        self.minMs = intervalS[0] * 1000
+        self.maxMs = intervalS[1] * 1000
+        self.isBusy = False
+        self.manualStrike = None
+
+
+def buildRigs(rigConfigs, makeStrip, testMode=False):
     """
-    Trigger synchronised lightning and thunder effect.
-    
-    Sequence:
-        1. Turn on status LED
-        2. Start lightning flash animation
-        3. Simultaneously start thunder sound (random track)
-        4. Wait for effect to complete
-        5. Turn off status LED
-    
-    Args:
-        neopixels: Initialised NeoPixel object
-        mp3_player: Initialised MP3Player object
-        status_led: Status LED Pin object
-    
-    Timing:
-        - Lightning flash: ~500ms duration
-        - Thunder sound: ~3-5 seconds (depends on MP3 file)
-        - Total effect: ~3-5 seconds
+    Create a Rig per configuration entry. makeStrip(pin, pixels) opens the strip: a NeoPixel on
+    the Pico, a fake under pytest. testMode swaps every interval for TEST_INTERVAL_S.
     """
-    status_led.on()  # Visual indicator that effect is active
-    
-    # Select random thunder track (1 to TRACK_COUNT)
-    track = random.randint(1, TRACK_COUNT)
-    
-    print(f"⚡ Triggering effect - Track {track}")
-    
-    # Start thunder playback
-    # Do this first so sound starts immediately
-    mp3_player.playTrack(track)
-    
-    # Simultaneously trigger lightning flash
-    # Lightning duration is shorter than thunder, creating realistic effect
-    executeRandomLightning(neopixels, duration_ms=500, batch_size=LED_BATCH_SIZE)
-    
-    # Wait for thunder sound to finish
-    # Typical thunder duration: 3-5 seconds
-    # This prevents rapid re-triggering and allows effect to complete
-    time.sleep(4)
-    
-    print("✅ Effect complete")
-    
-    status_led.off()  # Effect finished
+    return [
+        Rig(
+            config["name"],
+            makeStrip(config["pin"], config["pixels"]),
+            TEST_INTERVAL_S if testMode else config["intervalS"],
+        )
+        for config in rigConfigs
+    ]
 
 
-# ============================================================================
-# REPL/TEST HELPERS EXPOSED VIA main.py
-# ============================================================================
-
-def testLightning():
+class Thunder:
     """
-    Run a single random lightning flash using configured LED_PIN/LED_COUNT.
+    The one shared audio path: every strike asks it for a random thunder track.
 
-    REPL usage (after exec-ing main.py):
-        >>> testLightning()
+    Latest strike wins. A play command goes out at once, cutting off any thunder still playing,
+    unless the previous command left the DFPlayer less than CMD_DELAY_MS ago (back-to-back
+    frames overflow its buffer). Then the track waits out the gap, and a strike during that wait
+    replaces it, so at most one command is ever pending and nothing queues.
     """
-    return _lights_testLightning(LED_PIN, LED_COUNT)
+
+    def __init__(self, player, clock, rng, trackCount):
+        self.player = player
+        self.clock = clock
+        self.rng = rng
+        self.trackCount = trackCount
+        self.lastSentAt = None
+        self.pendingTrack = None
+        self.sender = None
+
+    def strike(self):
+        track = self.rng.randint(1, self.trackCount)
+        if self.pendingTrack is not None:
+            self.pendingTrack = track
+            return
+        wait = 0 if self.lastSentAt is None else CMD_DELAY_MS - self.clock.since(self.lastSentAt)
+        if wait <= 0:
+            self._send(track)
+        else:
+            self.pendingTrack = track
+            # Held here because CPython (the host tests) keeps only a weak reference to tasks
+            self.sender = asyncio.create_task(self._sendAfter(wait))
+
+    async def _sendAfter(self, wait):
+        await self.clock.sleep(wait)
+        self._send(self.pendingTrack)
+        self.pendingTrack = None
+
+    def _send(self, track):
+        self.player.playTrack(track)
+        self.lastSentAt = self.clock.now()
 
 
-def testAllPatterns():
-    """
-    Run all lightning patterns (blue/red) using configured LED_PIN/LED_COUNT.
+class Storm:
+    """Runs every rig on its own timer and routes each strike through one strike path."""
 
-    REPL usage:
-        >>> testAllPatterns()
-    """
-    return _lights_testAllPatterns(LED_PIN, LED_COUNT)
+    def __init__(self, rigs, thunder, clock, rng):
+        self.rigs = rigs
+        self.thunder = thunder
+        self.clock = clock
+        self.rng = rng
 
+    async def run(self):
+        await asyncio.gather(*[self._runRig(rig) for rig in self.rigs])
 
-def playTrack(track=None, volume=None):
-    """
-    Play a thunder track via the MP3 player.
-
-    Args:
-        track: Optional track number (1..TRACK_COUNT). If None, chooses random.
-        volume: Optional volume override (0..30). If provided, applies before play.
-
-    REPL usage:
-        >>> playTrack()        # random track at configured volume
-        >>> playTrack(2)       # play specific track
-        >>> playTrack(3, 22)   # set volume, then play track 3
-    """
-    player = _get_mp3_player()
-    if volume is not None:
-        player.setVolume(volume)
-    if track is None:
-        track = random.randint(1, TRACK_COUNT)
-    player.playTrack(track)
-
-
-def testE2E(duration_ms=500):
-    """
-    End-to-end test: randomise a lightning effect and a thunder track,
-    start them simultaneously, and wait a few seconds.
-
-    Lightning runs locally while audio plays asynchronously on DFPlayer.
-
-    REPL usage:
-        >>> testE2E()
-    """
-    np = _get_neopixels()
-    player = _get_mp3_player()
-    track = random.randint(1, TRACK_COUNT)
-    print(f"🎬 E2E: Track {track}, duration {duration_ms}ms")
-    player.playTrack(track)
-    executeRandomLightning(np, duration_ms=duration_ms, batch_size=LED_BATCH_SIZE)
-    time.sleep(4)
-    return track
-
-
-# ============================================================================
-# MAIN EVENT LOOP
-# ============================================================================
-
-def main():
-    """
-    Main application loop.
-    
-    Behaviour:
-        1. Initialise hardware
-        2. Seed random number generator for variability
-        3. Enter infinite loop:
-           a. Generate random interval (MIN_INTERVAL to MAX_INTERVAL seconds)
-           b. Wait for interval to expire (check for manual trigger every 100ms)
-           c. Trigger lightning + thunder effect
-           d. Cooldown period to prevent rapid re-triggering
-        4. Handle errors gracefully (print and continue)
-    
-    Manual Trigger:
-        If USE_MANUAL_TRIGGER is True, button press will immediately trigger
-        effect regardless of interval timer.
-    
-    Loop runs indefinitely until power off or Ctrl+C (REPL only).
-    """
-    try:
-        # Initialise all hardware
-        neopixels, mp3_player, status_led, trigger_button = initialiseHardware()
-        
-        # Seed random number generator
-        # Using time-based seed for variability between boots
-        random.seed(time.ticks_ms())
-        
-        print("🌩️  Entering autonomous mode")
-        print(f"   Interval: {MIN_INTERVAL}-{MAX_INTERVAL} seconds")
-        print(f"   Cooldown: {COOLDOWN_PERIOD} seconds")
-        if USE_MANUAL_TRIGGER:
-            print(f"   Manual trigger: GPIO {TRIGGER_PIN}")
-        print()
-        print("Press Ctrl+C to stop (REPL only)")
-        print("=" * 50)
-        print()
-        
-        # Main event loop
+    async def _runRig(self, rig):
         while True:
-            # Generate random interval for next effect
-            interval = random.randint(MIN_INTERVAL, MAX_INTERVAL)
-            print(f"⏱️  Next effect in {interval} seconds...")
-            
-            # Wait for interval with manual trigger check
-            # Break interval into 100ms chunks to check trigger button
-            elapsed = 0
-            triggered = False
-            
-            while elapsed < interval:
-                # Check manual trigger button (if enabled)
-                if USE_MANUAL_TRIGGER and trigger_button and trigger_button.value() == 1:
-                    print("🔘 Manual trigger detected!")
-                    triggered = True
-                    break
-                
-                # Sleep for 100ms, then check again
-                time.sleep(0.1)
-                elapsed += 0.1
-            
-            # Trigger effect
-            triggerEffect(neopixels, mp3_player, status_led)
-            
-            # Cooldown period to prevent rapid re-triggering
-            # Especially important if manual trigger is used
-            print(f"💤 Cooldown period ({COOLDOWN_PERIOD}s)...")
-            time.sleep(COOLDOWN_PERIOD)
-            print()
-    
-    except KeyboardInterrupt:
-        # Graceful shutdown on Ctrl+C (REPL only)
-        print()
-        print("=" * 50)
-        print("� Shutting down...")
-        
-        # Clean up hardware
-        if 'neopixels' in locals():
-            clearLights(neopixels, LED_BATCH_SIZE)
-        
-        if 'mp3_player' in locals():
-            mp3_player.stop()
-        
-        if 'status_led' in locals():
-            status_led.off()
-        
-        print("✅ Shutdown complete")
-    
-    except Exception as e:
-        # Handle unexpected errors
-        print()
-        print("=" * 50)
-        print("❌ FATAL ERROR:")
-        print(f"   {e}")
-        print()
-        print("Hardware state:")
-        print(f"   NeoPixels: {'initialised' if 'neopixels' in locals() else 'not initialised'}")
-        print(f"   MP3 Player: {'initialised' if 'mp3_player' in locals() else 'not initialised'}")
-        print()
-        
-        # Attempt cleanup
+            await self.clock.sleep(self.rng.randint(rig.minMs, rig.maxMs))
+            if rig.isBusy:
+                # A manual strike is running on this rig. Striking now would garble it, so wait
+                # for it to end and start a fresh interval from there, as after any strike
+                while rig.isBusy:
+                    await self.clock.sleep(FRAME_POLL_MS)
+                continue
+            await self.strike(rig)
+
+    async def watchTrigger(self, button):
+        """
+        Fire one strike on a random idle rig for each press. Fires on the press edge, so a held
+        button strikes once; a press while every rig is striking is ignored, because two
+        patterns on one strip would garble it. Rig timers are not reset.
+        """
+        wasPressed = False
+        while True:
+            isPressed = button.value() == 1
+            if isPressed and not wasPressed:
+                idle = [rig for rig in self.rigs if not rig.isBusy]
+                if idle:
+                    rig = idle[self.rng.randint(0, len(idle) - 1)]
+                    # Mark it busy now, before the task runs, so a second press can't pick it
+                    rig.isBusy = True
+                    # MicroPython's scheduler holds running tasks, but CPython (the host tests) keeps
+                    # only a weak reference, so the rig holds it until the strike ends
+                    rig.manualStrike = asyncio.create_task(self.strike(rig))
+            wasPressed = isPressed
+            await self.clock.sleep(TRIGGER_POLL_MS)
+
+    async def strike(self, rig):
+        rig.isBusy = True
         try:
-            if 'neopixels' in locals():
-                clearLights(neopixels, LED_BATCH_SIZE)
-            if 'status_led' in locals():
-                status_led.off()
-        except:
-            pass  # Ignore cleanup errors
-        
-        print("System halted. Power cycle to restart.")
+            print("Rig", rig.name, "strikes")
+            self.thunder.strike()
+            await executeRandomLightning(rig.strip, self.clock, self.rng)
+        finally:
+            rig.isBusy = False
+
+
+async def heartbeat(led, clock):
+    """Blink the onboard LED at 1 Hz. If it stops blinking, the scheduler has stalled or died."""
+    while True:
+        led.toggle()
+        await clock.sleep(500)
+
+
+async def showtime(storm, led, trigger, clock):
+    tasks = [storm.run(), heartbeat(led, clock)]
+    if trigger:
+        tasks.append(storm.watchTrigger(trigger))
+    await asyncio.gather(*tasks)
 
 
 # ============================================================================
-# ENTRY POINT
+# START-UP: the only place hardware is created
 # ============================================================================
 
-# Execute main function when module loads
-# This runs automatically via boot.py
+
+class NoUart:
+    """Stands in for the DFPlayer UART in Wokwi (see SIMULATED): accepts frames and drops them."""
+
+    def write(self, frame):
+        return len(frame)
+
+
+def start():
+    """Open the hardware, wake the DFPlayer and run the storm until power-off or Ctrl-C."""
+    import machine
+    import neopixel
+    import os
+    import random
+    import time
+
+    from clock import PicoClock
+    from mp3_player import startPlayer
+
+    led = machine.Pin(STATUS_LED_PIN, machine.Pin.OUT)
+    led.on()  # Solid while starting; blinking once the storm runs
+
+    def makeStrip(pin, pixels):
+        strip = neopixel.NeoPixel(machine.Pin(pin, machine.Pin.OUT), pixels)
+        strip.fill((0, 0, 0))  # Strips power up showing random colours
+        strip.write()
+        return strip
+
+    rigs = buildRigs(RIGS, makeStrip, TEST_MODE)
+
+    if SIMULATED:
+        uart = NoUart()
+    else:
+        # UART1 keeps UART0 free for USB serial debugging; 9600 baud is the only reliable rate
+        uart = machine.UART(1, baudrate=9600, tx=machine.Pin(MP3_TX_PIN), rx=machine.Pin(MP3_RX_PIN))
+    player = startPlayer(uart)
+    player.setVolume(MP3_VOLUME)
+    time.sleep_ms(CMD_DELAY_MS)
+
+    # ticks_ms() is nearly the same on every boot; os.urandom draws on the RP2350's hardware
+    # entropy, so each power-up gets a different storm (docs/reference/known-issues.md)
+    random.seed(int.from_bytes(os.urandom(4), "little"))
+
+    trigger = None
+    if USE_MANUAL_TRIGGER:
+        trigger = machine.Pin(TRIGGER_PIN, machine.Pin.IN, machine.Pin.PULL_DOWN)
+
+    clock = PicoClock()
+    storm = Storm(rigs, Thunder(player, clock, random, TRACK_COUNT), clock, random)
+
+    print("Storm running:", len(rigs), "rigs", "(test mode)" if TEST_MODE else "")
+    try:
+        asyncio.run(showtime(storm, led, trigger, clock))
+    finally:
+        # Ctrl-C in the REPL or a fatal error: leave the display dark and quiet
+        for rig in rigs:
+            rig.strip.fill((0, 0, 0))
+            rig.strip.write()
+        time.sleep_ms(CMD_DELAY_MS)  # A play may have gone out just before the interrupt
+        player.stop()
+        led.off()
+
+
+# boot.py runs this file on power-up (AUTO_START); host tests import it without starting
 if __name__ == "__main__":
-    main()
+    start()

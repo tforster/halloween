@@ -35,7 +35,7 @@ WS2812B data is timing-sensitive. A full 300-pixel write blocks for about 9 ms; 
 
 ## 6. Randomness
 
-MicroPython's `random` is pseudo-random. `main.py` seeds it from `time.ticks_ms()`, which is much the same on every boot, so boards powered on together can strike in step. ADC noise from a floating pin makes a better seed.
+MicroPython's `random` is pseudo-random. 2025 seeded it from `time.ticks_ms()`, which is much the same on every boot, so the storm repeated itself. `main.start()` now seeds it from `os.urandom`, which draws on the RP2350's hardware entropy.
 
 ## 7. Multi-Board Updates
 
