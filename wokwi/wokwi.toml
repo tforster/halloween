@@ -1,7 +1,7 @@
-# Wokwi for VS Code: Pico 2 running the stock MicroPython image from devops/image.
-# The firmware files are not baked in; devops/simulate.sh mounts src/ from the host over the RFC 2217 port,
-# because the simulated Pico 2's flash is not writable.
+# Wokwi for VS Code: Pico (RP2040) running the stock RPI_PICO MicroPython image from devops/image, the same release as
+# the Pico 2 image. Wokwi's Pico 2 (RP2350) corrupts the running MicroPython at random; see ADR-012.
+# The firmware files are not baked in; devops/simulate.sh mounts src/ from the host over the RFC 2217 port.
 [wokwi]
 version = 1
-firmware = '../devops/image/RPI_PICO2-20260824-v1.29.0.uf2'
+firmware = '../devops/image/RPI_PICO-20260824-v1.29.0.uf2'
 rfc2217ServerPort = 4000

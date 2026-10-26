@@ -10,12 +10,11 @@
 #   --help              Show this help message
 #
 # Description:
-#   Start the simulator first (VS Code: "Wokwi: Start Simulator" on wokwi/wokwi.toml). The simulated Pico 2's flash is not
-#   writable (mkfs fails with ENOSPC), so src/ is not copied: mpremote mounts it from the host over the serial link and the firmware
-#   imports from there. Test mode (1-3 s intervals) makes overlapping strikes common, and each rig drives 60 pixels to match
-#   the simulated strips; both are switched on for this run only,
-#   so src/main.py stays as deployed. Wokwi has no DFPlayer part and its Pico 2 hangs opening UART1, so SIMULATED skips the
-#   UART and thunder frames print here instead ("DFPlayer < 7E FF ...").
+#   Start the simulator first (VS Code: "Wokwi: Start Simulator" on wokwi/wokwi.toml). src/ is not copied: mpremote mounts it
+#   from the host over the serial link and the firmware imports from there, so an edit needs only another run. Test mode
+#   (1-3 s intervals) makes overlapping strikes common, and each rig drives 60 pixels to match the simulated strips; both are
+#   switched on for this run only, so src/main.py stays as deployed. Wokwi has no DFPlayer part (and its Pico 2 hung opening
+#   UART1), so SIMULATED skips the UART and thunder frames print here instead ("DFPlayer < 7E FF ...").
 #   Ctrl-C stops the storm.
 #
 ####################################################################################################################################
