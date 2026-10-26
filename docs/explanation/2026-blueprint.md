@@ -128,7 +128,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
 - **Superseded ADR:** ADR-008 (independent multi-board) is marked superseded by ADR-009.
 - **WireViz:** the installation wiring is a YAML harness file in the repo. It covers supplies, fuses, Pico, level shifter, DFPlayer, amplifier, speaker and both strips' power injection and data. The rendered SVG is committed next to it, because GitHub does not render WireViz itself.
 - **Wokwi:**
-  - A Wokwi project (`wokwi/diagram.json`, `wokwi/wokwi.toml`) holds a Pico 2 with two WS2812 strips on the real pins (60 pixels each, because two 300-pixel strips simulate at about 4% of real time), running the real firmware on the stock MicroPython image. `npm run simulate` mounts `src/` from the host over RFC 2217 (the simulated flash is not writable) and starts the storm in test mode.
+  - A Wokwi project (`wokwi/diagram.json`, `wokwi/wokwi.toml`) holds a Pico 2 with one 10-pixel WS2812 strip on rig A's pin (two 300-pixel strips simulate at about 4% of real time), running the real firmware on the stock MicroPython image. `npm run simulate` mounts `src/` from the host over RFC 2217 (the simulated flash is not writable) and starts the storm in test mode.
   - Wokwi has no DFPlayer part, so the DFPlayer UART is watched on the serial monitor in its place.
 - **Mermaid** stays for system context, runtime flow and state diagrams.
 - **Updates:** README, CLAUDE.md and the hardware, how-to and reference docs are updated from three boards to two rigs on one controller. The "Previous Years" table gains a 2026 row at season end.
