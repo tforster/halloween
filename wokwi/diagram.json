@@ -9,13 +9,23 @@
       "id": "rigA",
       "top": -120,
       "left": 160,
-      "attrs": { "pixels": "10", "pixelSize": "2020" }
+      "attrs": { "pixels": "60", "pixelSize": "2020" }
+    },
+    {
+      "type": "wokwi-led-strip",
+      "id": "rigB",
+      "top": 260,
+      "left": 160,
+      "attrs": { "pixels": "60", "pixelSize": "2020" }
     }
   ],
   "connections": [
     ["pico:GP16", "rigA:DIN", "green", []],
     ["pico:VBUS", "rigA:VDD", "red", []],
-    ["pico:GND.8", "rigA:VSS", "black", []]
+    ["pico:GND.8", "rigA:VSS", "black", []],
+    ["pico:GP17", "rigB:DIN", "green", []],
+    ["pico:VBUS", "rigB:VDD", "red", []],
+    ["pico:GND.5", "rigB:VSS", "black", []]
   ],
   "dependencies": {}
 }

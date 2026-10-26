@@ -23,9 +23,9 @@ Run the real firmware on a simulated Pico 2 with both strips, watch overlapping 
    npm run simulate
    ```
 
-   This mounts `src/` on the simulated Pico over Wokwi's RFC 2217 port (4000) and starts the storm in test mode, so each rig strikes every 1–3 s. Only rig A runs, on one simulated 10-pixel strip, and drives 10 pixels for this run: Wokwi models every WS2812 bit, and two 300-pixel strips run at about 4% of real time. `src/main.py` is not edited.
+   This mounts `src/` on the simulated Pico over Wokwi's RFC 2217 port (4000) and starts the storm in test mode, so each rig strikes every 1–3 s. The simulated strips have 60 pixels, not 300, and each rig drives 60 for this run: Wokwi models every WS2812 bit, and two 300-pixel strips run at about 4% of real time. `src/main.py` is not edited.
 
-   To exercise the shared thunder channel with both rigs, use `npm run simulate -- --rigs=2`; rig B strikes in the serial output but has no strip in the diagram.
+   For a lighter run with one strip, use `npm run simulate -- --rigs=1`.
 
 3. Press Ctrl-C to stop. The simulated flash is not writable, so nothing is stored on the Pico. Run `npm run simulate` again after restarting the simulator.
 
