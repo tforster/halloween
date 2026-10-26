@@ -54,6 +54,10 @@ TRIGGER_POLL_MS = 50     # Poll period; also debounces, as contact bounce settle
 # How often a rig whose timer fired mid-strike checks whether the strike has ended
 FRAME_POLL_MS = 10
 
+# Set by devops/simulate.sh. Wokwi's Pico 2 hangs inside machine.UART(1, ...) and has no
+# DFPlayer part, so a simulated run sends frames nowhere; MP3Player still prints each one
+SIMULATED = False
+
 # Status LED (onboard Pico LED)
 STATUS_LED_PIN = 25
 
@@ -205,6 +209,13 @@ async def showtime(storm, led, trigger, clock):
 # ============================================================================
 
 
+class NoUart:
+    """Stands in for the DFPlayer UART in Wokwi (see SIMULATED): accepts frames and drops them."""
+
+    def write(self, frame):
+        return len(frame)
+
+
 def start():
     """Open the hardware, wake the DFPlayer and run the storm until power-off or Ctrl-C."""
     import machine
@@ -227,8 +238,11 @@ def start():
 
     rigs = buildRigs(RIGS, makeStrip, TEST_MODE)
 
-    # UART1 keeps UART0 free for USB serial debugging; 9600 baud is the only reliable rate
-    uart = machine.UART(1, baudrate=9600, tx=machine.Pin(MP3_TX_PIN), rx=machine.Pin(MP3_RX_PIN))
+    if SIMULATED:
+        uart = NoUart()
+    else:
+        # UART1 keeps UART0 free for USB serial debugging; 9600 baud is the only reliable rate
+        uart = machine.UART(1, baudrate=9600, tx=machine.Pin(MP3_TX_PIN), rx=machine.Pin(MP3_RX_PIN))
     player = startPlayer(uart)
     player.setVolume(MP3_VOLUME)
     time.sleep_ms(CMD_DELAY_MS)

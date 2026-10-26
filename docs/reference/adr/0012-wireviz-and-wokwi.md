@@ -11,7 +11,7 @@ Mermaid covers the project's system context, runtime flow and state diagrams, bu
 **Decision:**
 
 - **WireViz** for the installation's wiring harness: decision and harness are added by the wiring story (HALL-4).
-- **Wokwi** for simulation. `wokwi/diagram.json` holds a Pico 2 with one WS2812 strip on GP16, rig A's real pin. It has 10 pixels, not the real 300, because Wokwi models every WS2812 bit and two 300-pixel strips ran at about 4% of real time; `npm run simulate` runs rig A alone at 10 pixels for that run only. `wokwi/wokwi.toml` boots the stock MicroPython image from `devops/image/`, and `npm run simulate` mounts `src/` from the host over Wokwi's RFC 2217 serial port and starts the storm in test mode. Wokwi has no DFPlayer part, so `MP3Player` prints every frame it sends and the serial output stands in for the DFPlayer.
+- **Wokwi** for simulation. `wokwi/diagram.json` holds a Pico 2 with one WS2812 strip on GP16, rig A's real pin. It has 10 pixels, not the real 300, because Wokwi models every WS2812 bit and two 300-pixel strips ran at about 4% of real time; `npm run simulate` runs rig A alone at 10 pixels for that run only. `wokwi/wokwi.toml` boots the stock MicroPython image from `devops/image/`, and `npm run simulate` mounts `src/` from the host over Wokwi's RFC 2217 serial port and starts the storm in test mode. Wokwi has no DFPlayer part, and its Pico 2 hangs inside `machine.UART(1, ...)` on MicroPython 1.26.1 and 1.29.0, so `npm run simulate` sets `main.SIMULATED` to skip the UART; `MP3Player` prints every frame it sends and the serial output stands in for the DFPlayer.
 
 **Rationale:**
 

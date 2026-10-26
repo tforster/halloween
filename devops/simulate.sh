@@ -14,7 +14,8 @@
 #   writable (mkfs fails with ENOSPC), so src/ is not copied: mpremote mounts it from the host over the serial link and the firmware
 #   imports from there. Test mode (1-3 s intervals) makes overlapping strikes common, and each rig drives 10 pixels to match
 #   the simulated strip; both are switched on for this run only,
-#   so src/main.py stays as deployed. Wokwi has no DFPlayer part, so thunder frames print here instead ("DFPlayer < 7E FF ...").
+#   so src/main.py stays as deployed. Wokwi has no DFPlayer part and its Pico 2 hangs opening UART1, so SIMULATED skips the
+#   UART and thunder frames print here instead ("DFPlayer < 7E FF ...").
 #   Ctrl-C stops the storm.
 #
 ####################################################################################################################################
@@ -64,6 +65,7 @@ simulatedPixels=10
 # which last for this session only
 mpremote connect "port:rfc2217://localhost:${port}" resume mount src exec "import main
 main.TEST_MODE = True
+main.SIMULATED = True
 main.RIGS = main.RIGS[:${rigs}]
 for rig in main.RIGS:
     rig['pixels'] = ${simulatedPixels}

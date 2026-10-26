@@ -33,7 +33,7 @@ Run the real firmware on a simulated Pico 2 with both strips, watch overlapping 
 
 - Rig A (top strip, GP16) and Rig B (bottom strip, GP17) strike at different times.
 - Within a few minutes the two rigs strike together, and both strips keep animating through the overlap.
-- Each strike prints `Rig A strikes` (or B) followed by a play-track frame such as `DFPlayer < 7E FF 06 03 00 00 02 FE F6 EF`; Wokwi has no DFPlayer part, so this output stands in for it. The frame format is in [DFPlayer Mini Protocol](../reference/dfplayer-protocol.md).
+- Each strike prints `Rig A strikes` (or B) followed by a play-track frame such as `DFPlayer < 7E FF 06 03 00 00 02 FE F6 EF`; Wokwi has no DFPlayer part, and its Pico 2 hangs when MicroPython opens UART1, so the simulated run opens no UART (`main.SIMULATED`) and this output stands in for the DFPlayer. The frame format is in [DFPlayer Mini Protocol](../reference/dfplayer-protocol.md).
 
 ## 4. Troubleshooting
 
