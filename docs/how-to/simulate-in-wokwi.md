@@ -37,10 +37,11 @@ Run the real firmware on a simulated Pico 2 with both strips, watch overlapping 
 
 ## 4. Troubleshooting
 
-| Symptom                                                  | Fix                                                                                                                                              |
-| :------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `failed to access rfc2217://localhost:4000`              | The simulator is not running, or another program holds the port. Start it, or pass `npm run simulate -- --port=<n>` to match `rfc2217ServerPort` |
-| `could not enter raw repl`                               | A storm from an earlier run is still going. Restart the simulator (or press Ctrl-A in its serial monitor), then run `npm run simulate` again     |
-| `mpremote` errors that mention the protocol or a version | Install the `mpremote` release matching the image (`pip install mpremote==1.26.1`)                                                               |
+| Symptom                                                                                              | Fix                                                                                                                                                               |
+| :--------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `failed to access rfc2217://localhost:4000`                                                          | The simulator is not running, or another program holds the port. Start it, or pass `npm run simulate -- --port=<n>` to match `rfc2217ServerPort`                  |
+| `could not enter raw repl`                                                                           | A storm from an earlier run is still going. Restart the simulator (or press Ctrl-A in its serial monitor), then run `npm run simulate` again                      |
+| `mpremote` errors that mention the protocol or a version                                             | Install the `mpremote` release matching the image (`pip install mpremote==1.29.0`)                                                                                |
+| `SyntaxError` or `AttributeError` in a file that is correct on disk, or `KeyError` inside `mpremote` | Wokwi's RFC 2217 link occasionally drops bytes while `mpremote mount` sends a file, whatever its encoding. Restart the simulator and run `npm run simulate` again |
 
 [← Back to How-To Guides](./README.md)

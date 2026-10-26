@@ -60,9 +60,10 @@ fi
 # rig, for this run only) have 60 pixels
 simulatedPixels=60
 
-# resume skips mpremote's soft reset: each reset re-runs _boot.py, which tries to format the unwritable flash and takes
-# longer than mpremote waits for the raw REPL. Importing main does not start it; start() runs after the overrides,
-# which last for this session only
+# resume skips mpremote's soft reset: on MicroPython 1.26.1 each reset re-ran _boot.py, which tried to format the
+# unwritable flash for longer than mpremote waits for the raw REPL. 1.29.0 resets in about a second, but runs without
+# resume still hung entering the raw REPL, so it stays. Importing main does not start it; start() runs after the
+# overrides, which last for this session only
 mpremote connect "port:rfc2217://localhost:${port}" resume mount src exec "import main
 main.TEST_MODE = True
 main.SIMULATED = True

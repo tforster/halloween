@@ -35,7 +35,7 @@ WS2812B data is timing-sensitive. A full 300-pixel write blocks for about 9 ms; 
 
 ## 6. Randomness
 
-MicroPython's `random` is pseudo-random. 2025 seeded it from `time.ticks_ms()`, which is much the same on every boot, so the storm repeated itself. `main.start()` now seeds it from `os.urandom`, which draws on the RP2350's hardware entropy.
+MicroPython's `random` is pseudo-random. 2025 seeded it from `time.ticks_ms()`, which is much the same on every boot, so the storm repeated itself. `main.start()` now seeds it from `os.urandom`, which draws on the RP2350's hardware entropy. Since MicroPython 1.28 the rp2 port takes `os.urandom` from the pico-sdk's `pico_rand` (which uses the RP2350's TRNG) instead of the ring oscillator, and `os.urandom` raises on a negative length; the seed reads a fixed 4 bytes, so neither changes the firmware.
 
 ## 7. Multi-Board Updates
 
