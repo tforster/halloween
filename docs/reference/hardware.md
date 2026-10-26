@@ -1,6 +1,6 @@
 # Hardware <!-- omit in toc -->
 
-Specifications for one 2025 board: components, GPIO pin assignments, power budget and supply choices. Assembly steps are in [Assemble the Hardware](../how-to/assemble-hardware.md); the parts list is in [Bill of Materials](./bill-of-materials.md). The 2026 two-rig changes are in the [2026 blueprint](../explanation/2026-blueprint.md#41-hardware).
+Specifications for the 2026 installation: two rigs on one Raspberry Pi Pico 2, with one shared MP3 player, amplifier and speaker. This page covers the components, GPIO pin assignments, power budget and supply choices. The full wiring is the [wiring diagram](./assets/wiring.svg), rendered from [`wiring.yml`](./assets/wiring.yml). Assembly steps are in [Assemble the Hardware](../how-to/assemble-hardware.md), and the parts list is in the [Bill of Materials](./bill-of-materials.md).
 
 ## Table of Contents <!-- omit in toc -->
 
@@ -8,129 +8,86 @@ Specifications for one 2025 board: components, GPIO pin assignments, power budge
 - [2. Pin Assignments](#2-pin-assignments)
 - [3. Power Requirements](#3-power-requirements)
 - [4. Power Supplies](#4-power-supplies)
-- [5. Multi-Board Deployment](#5-multi-board-deployment)
-  - [5.1. Total Power Requirements](#51-total-power-requirements)
-  - [5.2. Supply Allocation](#52-supply-allocation)
-  - [5.3. Per-Board Power Budget](#53-per-board-power-budget)
+- [5. Wire Gauges and Runs](#5-wire-gauges-and-runs)
 
 ## 1. Components
 
-| Component                  | Role                               | Notes                                                                                                                                                                                                                                                                                          |
-| :------------------------- | :--------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Raspberry Pi Pico 2        | Controller                         | RP2350, 520 KB SRAM, MicroPython. [Product page](https://www.raspberrypi.com/products/raspberry-pi-pico-2/), [datasheet](https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf), [pinout](./assets/pico-2-pinout.pdf)                                                                   |
-| DFPlayer Mini MP3 module   | Thunder playback                   | 9600 baud UART, 16-bit DAC, 44.1 kHz, MicroSD up to 32 GB FAT32. [Universal Solder](https://www.universal-solder.ca/product/mini-mp3-player-module-with-microsd-slot-for-arduino-etc/), [DFRobot wiki](https://wiki.dfrobot.com/DFPlayer_Mini_SKU_DFR0299), [protocol](./dfplayer-protocol.md) |
-| 60 W BTL Class D amplifier | Drives the speaker                 | 12 V input. [Amazon](https://www.amazon.ca/dp/B0D8HCV43H)                                                                                                                                                                                                                                      |
-| WS2812B NeoPixel strip     | Lightning                          | 300 pixels per board (`LED_COUNT`). [Datasheet](https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf)                                                                                                                                                                                          |
-| Logic level shifter        | 3.3 V → 5 V NeoPixel data          | WS2812B data needs 5 V logic for noise margin                                                                                                                                                                                                                                                  |
-| 5 V supplies               | Pico, DFPlayer, shifter and pixels | Two per board; see [Power Supplies](#4-power-supplies)                                                                                                                                                                                                                                         |
-| 12 V supply                | Amplifier                          | Kept separate from the 5 V logic rail                                                                                                                                                                                                                                                          |
+| Component                  | Role                                   | Notes                                                                                                                                                                                                                                                                                          |
+| :------------------------- | :------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Raspberry Pi Pico 2        | Controller for both rigs               | RP2350, 520 KB SRAM, MicroPython. [Product page](https://www.raspberrypi.com/products/raspberry-pi-pico-2/), [datasheet](https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf), [pinout](./assets/pico-2-pinout.pdf)                                                                   |
+| DFPlayer Mini MP3 module   | Thunder playback, shared by both rigs  | 9600 baud UART, 16-bit DAC, 44.1 kHz, MicroSD up to 32 GB FAT32. [Universal Solder](https://www.universal-solder.ca/product/mini-mp3-player-module-with-microsd-slot-for-arduino-etc/), [DFRobot wiki](https://wiki.dfrobot.com/DFPlayer_Mini_SKU_DFR0299), [protocol](./dfplayer-protocol.md) |
+| 60 W BTL Class D amplifier | Drives the speaker                     | CANADUINO TPA3118, mono, 12 V input. Fed from the DFPlayer's DAC_L/DAC_R line outputs. [Amazon](https://www.amazon.ca/dp/B0D8HCV43H)                                                                                                                                                           |
+| Speaker                    | Thunder                                | One for the whole display, beside the central enclosure                                                                                                                                                                                                                                        |
+| WS2812B NeoPixel strip     | Lightning, one per rig                 | 300 pixels each, reused from 2025. [Datasheet](https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf)                                                                                                                                                                                           |
+| 74AHCT125 level shifter    | 3.3 V → 5 V data for both strips       | Two of its four channels. WS2812B data needs 5 V logic for noise margin; the AHCT family reads the Pico's 3.3 V as high while running at 5 V                                                                                                                                                   |
+| 1N5817 Schottky diode      | Pico power from the logic rail         | Into VSYS, so USB and the logic rail never feed each other ([Pico 2 datasheet](https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf), Powering Pico)                                                                                                                                   |
+| 330 Ω resistors (2)        | Series resistor at each strip's DIN    | Damps reflections on the long data runs                                                                                                                                                                                                                                                        |
+| 10 kΩ resistors (2)        | Sum DAC_L and DAC_R into the amp input | Mixes both channels into the mono input without shorting the DAC outputs together                                                                                                                                                                                                              |
+| 4.7 kΩ resistor            | GP15 pull-down                         | Optional manual trigger only; see [Pin Assignments](#2-pin-assignments)                                                                                                                                                                                                                        |
+| 5 V logic supply           | Pico, DFPlayer and level shifter       | See [Power Supplies](#4-power-supplies)                                                                                                                                                                                                                                                        |
+| 5 V pixel supplies (4)     | Two per rig                            | At pixel 1 and pixel 151 of each strip                                                                                                                                                                                                                                                         |
+| 12 V supply                | Amplifier                              | Kept separate from the 5 V rails                                                                                                                                                                                                                                                               |
 
 ![DFPlayer Mini pinout](./assets/dfplayer-mini.png)
 
 ## 2. Pin Assignments
 
-| GPIO Pin | Function       | Direction | Hardware Connection                | Rationale                                                    |
-| -------- | -------------- | --------- | ---------------------------------- | ------------------------------------------------------------ |
-| **GP16** | NeoPixel Data  | Output    | Level Shifter Input → NeoPixel DIN | Available GPIO, not needed for UART, suitable for PIO timing |
-| **GP4**  | MP3 TX         | Output    | Pico TX → DFPlayer Mini RX (Pin 2) | UART1 TX - dedicated hardware UART                           |
-| **GP5**  | MP3 RX         | Input     | Pico RX ← DFPlayer Mini TX (Pin 3) | UART1 RX - paired with GP4                                   |
-| **GP15** | Manual Trigger | Input     | Button to 3.3V (optional)          | Available GPIO with pull-down support                        |
-| **GP25** | Status LED     | Output    | Onboard LED                        | Built-in LED for status indication                           |
-
-**Pin Selection Rationale:**
-
-- **UART1 (GP4/GP5)**: Chosen over UART0 to avoid conflicts with USB serial debugging
-- **GPIO 16**: Not required for either UART, suitable for NeoPixel PIO operations
-- **GPIO 15**: Readily available for future expansion features
-- **All pins verified** against [Pico 2 Datasheet](https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf)
+| GPIO (pin)    | Function       | Direction | Hardware Connection                                       | Rationale                                                                                                                                                             |
+| ------------- | -------------- | --------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **GP16** (21) | Rig A data     | Output    | 74AHCT125 1A → 1Y → 330 Ω → rig A DIN                     | Not used by either UART; PIO drives the WS2812B timing                                                                                                                |
+| **GP17** (22) | Rig B data     | Output    | 74AHCT125 2A → 2Y → 330 Ω → rig B DIN                     | Next to GP16, also PIO-capable                                                                                                                                        |
+| **GP4** (6)   | MP3 TX         | Output    | Pico UART1 TX → DFPlayer RX (pin 2)                       | UART1, so UART0 stays free for USB serial debugging                                                                                                                   |
+| **GP5** (7)   | MP3 RX         | Input     | Unwired                                                   | UART1 RX, reserved; commands are sent without feedback                                                                                                                |
+| **GP15** (20) | Manual trigger | Input     | Button to 3V3 (pin 36), 4.7 kΩ pull-down to GND, optional | External pull-down because RP2350 erratum E9 can latch the pad at about 2 V, which the internal pull-down cannot clear; enable with `USE_MANUAL_TRIGGER` in `main.py` |
+| **GP25**      | Status LED     | Output    | Onboard LED                                               | Solid during start-up, then a 1 Hz heartbeat                                                                                                                          |
+| **VSYS** (39) | Power in       | —         | 5 V logic rail through the 1N5817 cathode                 | Diode-OR with USB; see [Components](#1-components)                                                                                                                    |
+| **VBUS** (40) | —              | —         | Unwired                                                   | Feeding it would back-feed a laptop's USB port                                                                                                                        |
 
 Pico GPIO pins source at most 12 mA each; drive nothing heavier than the level shifter or a switch directly.
 
+The 74AHCT125's output enables (1OE, 2OE) are active low and go to GND. The unused channels' inputs and enables (3A, 3OE, 4A, 4OE) also go to GND, because CMOS inputs must not float.
+
 ## 3. Power Requirements
 
-| Component               | Voltage   | Typical Current    | Maximum Current | Notes                                      |
-| ----------------------- | --------- | ------------------ | --------------- | ------------------------------------------ |
-| **Pico 2**              | 5V (VBUS) | 50-100mA           | 150mA           | Powered via USB or VBUS pin                |
-| **DFPlayer Mini**       | 5V        | 20-30mA idle       | 200mA peak      | Use 5V for best performance                |
-| **NeoPixels (150)**     | 5V        | 2.5-3A (lightning) | 9A (full white) | Lightning uses ~30% duty cycle per segment |
-| **Logic Level Shifter** | 5V + 3.3V | <10mA              | 50mA            | Bidirectional, minimal power               |
-| **60W Amplifier**       | 12V       | Variable           | 5A (60W/12V)    | Separate power required                    |
+| Component           | Voltage    | Typical Current     | Maximum Current  | Notes                                                |
+| ------------------- | ---------- | ------------------- | ---------------- | ---------------------------------------------------- |
+| **Pico 2**          | 5 V (VSYS) | 50–100 mA           | 150 mA           | About 4.7 V after the Schottky; VSYS takes 1.8–5.5 V |
+| **DFPlayer Mini**   | 5 V        | 20–30 mA idle       | 200 mA peak      |                                                      |
+| **74AHCT125**       | 5 V        | <1 mA               | 10 mA            |                                                      |
+| **NeoPixels (150)** | 5 V        | 2.5–3 A (lightning) | 9 A (full white) | Lightning uses about 30% duty cycle per segment      |
+| **60 W amplifier**  | 12 V       | Variable            | 5 A              | 60 W needs 24 V into 2 Ω; at 12 V it delivers less   |
 
-A full-white flash of 300 pixels draws about 18 A in theory; the lightning effect averages about 30 % of that, 5–6 A.
+A full-white flash of one 300-pixel strip draws about 18 A in theory; the lightning effect averages about 30% of that, 5–6 A per rig.
 
 ## 4. Power Supplies
 
-**⚠️ CRITICAL: Use Dual 5V Supplies for Reliable NeoPixel Operation**
+Six supplies, each with a fuse on its positive output and all on one common ground:
 
-**Why Two Supplies?**
+| Supply  | Rating   | Powers                    | Location                 | Fuse           |
+| ------- | -------- | ------------------------- | ------------------------ | -------------- |
+| PSU_L   | 5 V 3 A  | Pico, DFPlayer, 74AHCT125 | By the central enclosure | 2 A fast-blow  |
+| PSU_A1  | 5 V 8 A  | Rig A pixels 1–150        | At rig A pixel 1         | 10 A fast-blow |
+| PSU_A2  | 5 V 8 A  | Rig A pixels 151–300      | At rig A pixel 151       | 10 A fast-blow |
+| PSU_B1  | 5 V 8 A  | Rig B pixels 1–150        | At rig B pixel 1         | 10 A fast-blow |
+| PSU_B2  | 5 V 8 A  | Rig B pixels 151–300      | At rig B pixel 151       | 10 A fast-blow |
+| PSU_AMP | 12 V 5 A | Amplifier only            | By the central enclosure | 5 A fast-blow  |
 
-A single 5V 8A supply powering 300 NeoPixels over 5 meters causes:
+- **Logic supply:** powers only the Pico, DFPlayer and level shifter. Why the logic rail is separate is in [ADR-009](./adr/0009-single-controller-for-multiple-rigs.md).
+- **Pixel supplies:** 5 V 8 A or larger, such as the reused 2025 supplies, one per 150-pixel half. One supply on 300 pixels over 5 m drops to 4.2–4.5 V at the far end, below the WS2812B specification.
+- **Split +5V at pixel 150/151:** cut or leave open only the +5V connection between pixels 150 and 151, so each supply feeds only its own half. GND and data stay continuous.
+- **Amplifier supply:** 12 V, kept off the 5 V rails because Class D amplifiers put switching noise on their supply. Its ground joins the star ground.
+- **Common ground:** every ground meets at one star-ground terminal block in the enclosure. Each rig's grounds reach it through the ground wire in that rig's data pair, which carries signal reference, not pixel current. That holds only while the supplies' DC outputs are isolated from mains earth, as plug-in switch-mode supplies normally are; check before using any supply whose V− is earth-bonded.
 
-- **Voltage drop:** 5.0V at start → 4.2-4.5V at end (below WS2812B spec)
-- **Colour shift:** Especially in white/blue
-- **Capacity issues:** 6A load on 8A supply = 75% (too close to limit)
-- **Thermal stress:** Supply runs hot, reduced reliability
+## 5. Wire Gauges and Runs
 
-**Solution: Split into Two Segments**
+| Run                                     | Gauge           | Length                                |
+| --------------------------------------- | --------------- | ------------------------------------- |
+| Pixel supply to its injection point     | 18 AWG silicone | Short, about 0.5 m                    |
+| Amp supply, amp to star ground          | 18 AWG          | Short, inside or beside the enclosure |
+| Logic rail, Pico, DFPlayer, line audio  | 22 AWG          | Inside the enclosure                  |
+| Data/ground pair to each strip, twisted | 22 AWG          | 2.7 m maximum, U1 to pixel 1          |
+| Speaker cable                           | 16 AWG          | As short as the layout allows         |
 
-Each 150-pixel segment gets its own supply → eliminates voltage drop, distributes load.
-
-**Power Supply 1: 5V 8A for Logic + Pixels 1-150**
-
-- **Powers:** Raspberry Pi Pico 2, DFPlayer Mini, NeoPixels 1-150, Logic Level Shifter
-- **Rating:** 5V 8A (40W)
-- **Typical Load:** ~3.2A during lightning effect
-- **Load Percentage:** 40% (comfortable headroom)
-- **Location:** Start of NeoPixel strip (pixel 1)
-- **Recommended:** Mean Well RS-50-5 (5V 10A, 50W) or equivalent
-- **Wire Gauge:**
-  - 5V to NeoPixels 1-150: 18 AWG
-  - 5V to Pico/MP3: 22 AWG sufficient
-  - Ground returns: 18 AWG
-
-**Power Supply 2: 5V 8A for Pixels 151-300**
-
-- **Powers:** NeoPixels 151-300 only
-- **Rating:** 5V 8A (40W)
-- **Typical Load:** ~3A during lightning effect
-- **Load Percentage:** 37% (comfortable headroom)
-- **Location:** Midpoint of NeoPixel strip (~2.5m, pixel 150)
-- **Recommended:** Mean Well RS-50-5 (5V 10A, 50W) or equivalent
-- **Wire Gauge:**
-  - 5V to NeoPixels 151-300: 18 AWG
-  - Ground return: 18 AWG
-  - **IMPORTANT:** Do NOT connect data signal here (data flows through from pixel 1)
-
-**Power Supply 3: 12V 5A for Amplifier**
-
-- **Powers:** 60W Class D Amplifier only
-- **Rating:** 12V 5A (60W)
-- **Typical Load:** Variable by volume
-- **Peak Load:** 5A at full power
-- **Why Isolated:** Audio amplifiers generate switching noise
-- **Recommended:** 12V 5A wall adapter or Mean Well equivalent
-- **Ground:** Connect to common ground with 5V supplies
-- **Wire Gauge:** 18 AWG adequate
-
-## 5. Multi-Board Deployment
-
-### 5.1. Total Power Requirements
-
-- 6× 5V 8A supplies (2 per board) = 48A at 5V (240W total)
-- 3× 12V 5A supplies (1 per board) = 15A at 12V (180W total)
-- **Combined: ~420W** for complete installation
-
-### 5.2. Supply Allocation
-
-- Each board has 2× dedicated 5V 8A supplies (one per 150-pixel segment) and 1× dedicated 12V 5A supply (amplifier)
-- **Total: 9 power supplies** (6× 5V + 3× 12V)
-
-### 5.3. Per-Board Power Budget
-
-| Board   | Supply 1 (5V 8A)          | Supply 2 (5V 8A) | Supply 3 (12V 5A) | Total Power |
-| ------- | ------------------------- | ---------------- | ----------------- | ----------- |
-| Board 1 | Pico + MP3 + Pixels 1-150 | Pixels 151-300   | Amplifier         | ~140W       |
-| Board 2 | Pico + MP3 + Pixels 1-150 | Pixels 151-300   | Amplifier         | ~140W       |
-| Board 3 | Pico + MP3 + Pixels 1-150 | Pixels 151-300   | Amplifier         | ~140W       |
+Strip starts can be up to about 5.4 m apart; where 2.7 m comes from is in [ADR-009](./adr/0009-single-controller-for-multiple-rigs.md). Measure the site before cutting cables; a longer run needs a buffer or differential link, which is out of scope for 2026.
 
 [← Back to Reference](./README.md)

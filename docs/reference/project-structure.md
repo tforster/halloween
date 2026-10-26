@@ -30,7 +30,7 @@ halloween/
 │   └── image/            # MicroPython and flash_nuke .uf2 images
 ├── tests/                # Repo convention tests (node:test) and firmware tests (pytest)
 ├── wokwi/                # Wokwi simulation: diagram.json and wokwi.toml
-├── docs/                 # Diátaxis documentation
+├── docs/                 # Diátaxis documentation; reference/assets/ holds the WireViz wiring harness
 ├── audio/                # Thunder recordings (gitignored; they go on the SD card)
 ├── CLAUDE.md             # Agent context
 ├── package.json          # npm scripts, oxlint and oxfmt

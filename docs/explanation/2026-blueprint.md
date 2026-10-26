@@ -75,8 +75,9 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
   - Rig A data on GP16.
   - Rig B data on GP17, the adjacent pin, which is also usable by PIO.
   - DFPlayer command on UART1 TX (GP4). UART1 RX (GP5) is reserved for later use but not required, because commands are sent without feedback.
-  - Optional manual trigger stays on GP15.
+  - Optional manual trigger stays on GP15, with an external 4.7 kΩ pull-down: RP2350 erratum E9 can latch the pad at about 2 V, which the internal pull-down cannot clear.
   - The onboard LED (GP25) shows status.
+  - Power enters at VSYS through a Schottky diode (1N5817), never VBUS, so a laptop can be plugged into USB while the display is powered without either feeding the other.
 - **Level shifting:** one 74AHCT125 (four channels), using two channels for the data lines. Each strip has a 330 Ω series resistor at its data input.
 - **Data runs:**
   - No more than 2.7 m from the level shifter to pixel 1 of each strip. That is a commonly cited ~3 m unbuffered limit less 10%.
@@ -85,12 +86,15 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
 - **Audio:**
   - One DFPlayer Mini, one 60 W BTL amplifier, one speaker.
   - The amplifier input comes from DAC_L/DAC_R, not SPK_1/SPK_2. This corrects the 2025 wiring guidance.
+  - The amplifier (TPA3118, mono) has a 2-position IN+/IN− input, so DAC_L and DAC_R are summed through two 10 kΩ resistors into IN+, with IN− to ground. Wiring DAC_L to IN+ and DAC_R to IN− would cancel the thunder. Confirm the terminals against the board's silkscreen on the bench.
 - **Power:**
-  - Two 5 V 8 A supplies per strip, injected at pixel 1 and pixel 151, so four in total. Supply A1 also powers the Pico, DFPlayer and level shifter.
+  - Two 5 V 8 A supplies per strip, injected at pixel 1 and pixel 151, so four in total. They power pixels only.
+  - The +5V connection between pixels 150 and 151 is cut, so each supply feeds only its half instead of fighting the other through the strip. GND and data stay continuous.
+  - One dedicated 5 V 3 A logic supply for the Pico, DFPlayer and level shifter, so a full-white flash cannot sag the controller and no 5 V power runs the 2.7 m back from a strip.
   - One 12 V 5 A supply for the amplifier.
-  - All grounds are common. Each 5 V output has a 10 A fuse and the 12 V output a 5 A fuse.
-  - Decoupling capacitors as in 2025.
-- **Placement:** controller, DFPlayer and amplifier in one central enclosure. Only speaker cable and the two data/ground pairs leave it.
+  - All grounds are common, meeting at a star-ground terminal block in the enclosure; each rig's grounds reach it through its data pair. Each pixel supply has a 10 A fuse, the logic supply a 2 A fuse and the 12 V supply a 5 A fuse.
+  - Decoupling capacitors as in 2025, plus 100 nF at the level shifter.
+- **Placement:** controller, level shifter, DFPlayer and amplifier in one central enclosure, with the logic and amplifier supplies beside it. Each pixel supply sits at its injection point. Only the speaker cable and the two data/ground pairs run out to the rigs.
 
 ### 4.2. Software
 
@@ -126,7 +130,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
   - ADR-011, `asyncio` scheduling.
   - ADR-012, WireViz and Wokwi for hardware diagrams and simulation[^diagram-tools].
 - **Superseded ADR:** ADR-008 (independent multi-board) is marked superseded by ADR-009.
-- **WireViz:** the installation wiring is a YAML harness file in the repo. It covers supplies, fuses, Pico, level shifter, DFPlayer, amplifier, speaker and both strips' power injection and data. The rendered SVG is committed next to it, because GitHub does not render WireViz itself.
+- **WireViz:** the installation wiring is a YAML harness file in the repo ([`wiring.yml`](../reference/assets/wiring.yml)). It covers supplies, fuses, Pico, level shifter, DFPlayer, amplifier, speaker and both strips' power injection and data. The rendered SVG is committed next to it, because GitHub does not render WireViz itself.
 - **Wokwi:**
   - A Wokwi project (`wokwi/diagram.json`, `wokwi/wokwi.toml`) holds a Pico (RP2040, because Wokwi's RP2350 corrupts MicroPython; see ADR-012) with two WS2812 strips on the real pins (60 pixels each, because two 300-pixel strips simulate at about 4% of real time), running the real firmware on the stock MicroPython image. `npm run simulate` mounts `src/` from the host over RFC 2217 and starts the storm in test mode.
   - Wokwi has no DFPlayer part, so the DFPlayer UART is watched on the serial monitor in its place.
@@ -165,7 +169,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
 
 ## 7. Further Notes
 
-- **Number of supplies:** five (four 5 V plus one 12 V), down from nine in 2025.
+- **Number of supplies:** six (one 5 V logic, four 5 V pixel, one 12 V amplifier), down from nine in 2025.
 - **Rig spacing:** 2.7 m is the planning limit for the distance from the level shifter to pixel 1. Measure the actual layout before cutting cables. If a run must be longer, stop and revisit; a buffer or differential link is out of scope.
 - **Overlap frequency:** two independent 60–120 s timers with strikes under one second collide only occasionally, so latest-strike-wins thunder should rarely be noticeable.
 - **Volume:** 2025's volume of 25/30 assumed one speaker per board. With one speaker for the whole display it may need retuning on site.

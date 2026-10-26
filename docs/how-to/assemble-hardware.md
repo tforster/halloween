@@ -1,241 +1,91 @@
 # Assemble the Hardware <!-- omit in toc -->
 
-Wire one 2025 board: Pico 2, DFPlayer Mini, 60 W amplifier, level shifter and a 300-pixel strip with dual power injection. Part specifications and pin assignments are in [Hardware](../reference/hardware.md).
-
-> [!WARNING]
->
-> This is the 2025 single-board wiring. The [2026 blueprint](../explanation/2026-blueprint.md#41-hardware) drives two rigs from one Pico and feeds the amplifier from the DFPlayer's DAC_L/DAC_R outputs instead of SPK_1/SPK_2. Follow the blueprint for 2026 builds until this guide is updated.
+Wire the 2026 installation: two rigs on one Pico 2, with one DFPlayer Mini, one 60 W amplifier and one speaker in a central enclosure. Part specifications, pin assignments and supply choices are in [Hardware](../reference/hardware.md); the parts list is in the [Bill of Materials](../reference/bill-of-materials.md).
 
 ## Table of Contents <!-- omit in toc -->
 
-- [1. Steps](#1-steps)
-- [2. Wiring Diagrams](#2-wiring-diagrams)
-  - [2.1. Complete System Wiring (Dual 5V Supply Configuration)](#21-complete-system-wiring-dual-5v-supply-configuration)
-  - [2.2. Level Shifter Detail](#22-level-shifter-detail)
-  - [2.3. DFPlayer Mini Wiring Detail](#23-dfplayer-mini-wiring-detail)
-- [3. Power Injection](#3-power-injection)
-  - [3.1. Dual Supply Wiring Diagram](#31-dual-supply-wiring-diagram)
+- [1. Prerequisites](#1-prerequisites)
+- [2. Wiring Diagram](#2-wiring-diagram)
+- [3. Steps](#3-steps)
+  - [3.1. Logic Rail and Star Ground](#31-logic-rail-and-star-ground)
+  - [3.2. Pico 2](#32-pico-2)
+  - [3.3. Level Shifter](#33-level-shifter)
+  - [3.4. DFPlayer Mini and Amplifier](#34-dfplayer-mini-and-amplifier)
+  - [3.5. Rigs](#35-rigs)
+  - [3.6. Optional Manual Trigger](#36-optional-manual-trigger)
 - [4. Safety](#4-safety)
-- [5. Alternative: Canaduino Power Module](#5-alternative-canaduino-power-module)
-  - [5.1. Level Shifter With Canaduino](#51-level-shifter-with-canaduino)
-- [6. Verification](#6-verification)
+- [5. Verification](#5-verification)
 
-## 1. Steps
+## 1. Prerequisites
 
-1. **Raspberry Pi Pico 2**
-   - Solder headers if not pre-installed
-   - Connect USB cable for development
+- Every part in the [Bill of Materials](../reference/bill-of-materials.md).
+- The site measured: each strip's pixel 1 must be no more than 2.7 m of cable from the enclosure.
+- Soldering iron, multimeter, wire strippers and crimper for ferrules.
 
-2. **MP3 Player Module**
-   - Wire TX → Pico GPIO 4 (Pico TX → Module RX, Pin 2)
-   - Wire RX → Pico GPIO 5 (Pico RX ← Module TX, Pin 3)
-   - Wire VCC → 5V power rail
-   - Wire GND → Common GND
-   - Insert formatted MicroSD card with MP3 files
-   - Connect audio output to amplifier input (SPK_1/SPK_2 pins recommended)
+## 2. Wiring Diagram
 
-3. **60W BTL Class D Amplifier**
-   - Connect MP3 module audio output to amplifier input
-   - Connect 12V power supply
-   - Connect speaker(s) to amplifier output
-   - Ensure proper polarity
+The diagram is the reference for every connection: parts, physical pin numbers, wire colours, gauges and lengths. Where this guide and the diagram disagree, the diagram wins. It is rendered from [`wiring.yml`](../reference/assets/wiring.yml); to change the wiring, edit the YAML and run `npm run wiring`.
 
-4. **Logic Level Shifter**
-   - Wire LV (low voltage) side to Pico 3.3V
-   - Wire HV (high voltage) side to 5V power rail
-   - Wire both grounds to common ground rail
-   - Wire Pico GPIO 16 → Shifter input
-   - Wire Shifter output → NeoPixel data in
+![Two-rig wiring diagram](../reference/assets/wiring.svg)
 
-5. **NeoPixel Strip (300 LEDs)**
-   - Wire data in to logic level shifter output
-   - Wire 5V to power supply (ensure 8A capacity)
-   - Wire ground to ground rail
+## 3. Steps
 
-6. **Optional: Trigger Switch**
-   - Wire one terminal to Pico GPIO 15
-   - Wire other terminal to 3.3V (active high)
-   - Set USE_MANUAL_TRIGGER = True in main.py
+Wire with every supply unplugged.
 
-## 2. Wiring Diagrams
+### 3.1. Logic Rail and Star Ground
 
-### 2.1. Complete System Wiring (Dual 5V Supply Configuration)
+1. Mount the 4-way terminal block as the 5 V logic bus and the 8-way block as the star ground.
+2. Fit a 2 A fuse on the logic supply's positive output and run it to the 5 V bus; run the logic supply's negative to the star ground.
+3. Fit a 5 A fuse on the 12 V supply's positive output and run it to the amplifier's +12V terminal; run its negative to the amplifier's GND terminal, and a second wire from that terminal to the star ground.
 
-```text
-5V Supply 1 (8A)              5V Supply 2 (8A)              12V Supply (5A)
-      │                             │                            │
-      │                             │                            │
-      ├──→ Pico 2 VBUS              │                            │
-      │                             │                            │
-      ├──→ DFPlayer Mini VCC        │                            │
-      │                             │                            │
-      ├──→ Level Shifter HV         │                            │
-      │                             │                            │
-      │                             │                            │
-      └──→ NeoPixels 1-150          └──→ NeoPixels 151-300       └──→ Amplifier 12V
-           (at pixel 1)                  (at pixel 150/151)
-           │                             │                             │
-           ├─ 5V ─────────────────────┐  ├─ 5V ──────────────────-─┐   │
-           ├─ GND ────────────────────┼──┼─ GND ─────────────────-─┼───┼─→ Common GND
-           └─ DIN ← GP16 (via shifter)   │                         │   │
-                    │                    │                         │   │
-                    │                    │                         │   │
-         ┌──────────┴─────-───┐    ┌──────────────┐         ┌──────┴──────────┐
-         │  Raspberry Pi      │    │  DFPlayer    │         │   60W Amplifier │
-         │    Pico 2          │    │    Mini      │         │   (Class D BTL) │
-         │                    │    │              │         │                 │
-         │  GP16 ─────────────┼────┼──────────────┼─────┐   │  Audio In       │
-         │  (via Level        │    │              │     │   │   ↑             │
-         │   Shifter)         │    │              │     │   │   │             │
-         │                    │    │              │     │   │   │             │
-         │  GP4 (TX) ─────────┼────┼──→ RX (2)    │     │   │   │             │
-         │  GP5 (RX) ←────────┼────┼─── TX (3)    │     │   │   │             │
-         │                    │    │              │     │   │   │             │
-         │  3.3V ─────────────┼────┼──────────────┼─────┼───┼───┘             │
-         │                    │    │  SPK_1 ──────┼─────┘   │                 │
-         │                    │    │  SPK_2 ──────┼─────────│→ Speaker Out 🔊 │
-         └────────────────────┘    └──────────────┘         └─────────────────┘
+### 3.2. Pico 2
 
-Key Connections:
-  • Data Signal: Pico GP16 → Level Shifter → Pixel 1 → ... → Pixel 300
-  • Power: Supply 1 powers pixels 1-150, Supply 2 powers pixels 151-300
-  • Common GND: All three supplies must share common ground
-  • Audio: DFPlayer SPK_1/SPK_2 → Amplifier Input
-```
+1. Solder the 1N5817 at VSYS (pin 39): cathode (banded end) to VSYS, anode wired to the 5 V bus.
+2. Wire GND (pin 38) to the star ground.
+3. Leave VBUS (pin 40) unwired. With the diode in place, you can plug a laptop into the Pico's USB while the display is powered.
+4. Fit a 100 µF capacitor across VSYS and GND.
 
-### 2.2. Level Shifter Detail
+### 3.3. Level Shifter
 
-```text
-Level Shifter (Bidirectional)
-┌────────────────────────────┐
-│                            │
-│   LV (Low Voltage Side)    │         HV (High Voltage Side)
-│   ────────────────────     │         ────────────────────
-│                            │
-│   VCC_L ←── 3.3V (Pico)    │         VCC_H ←── 5V (LED Rail)
-│   GND   ←── Common GND     │         GND ←── Common GND
-│   I/O1  ←── GP16 (Pico)    │         I/O1 ──→ NeoPixel DIN
-│                            │
-└────────────────────────────┘
-```
+1. Wire the 74AHCT125's VCC (pin 14) to the 5 V bus and GND (pin 7) to the star ground, with a 100 nF capacitor across them at the chip.
+2. Jumper 1OE (1), 2OE (4), 3A (9), 3OE (10), 4A (12) and 4OE (13) to GND (7).
+3. Wire Pico GP16 (pin 21) to 1A (2) and GP17 (pin 22) to 2A (5).
 
-### 2.3. DFPlayer Mini Wiring Detail
+### 3.4. DFPlayer Mini and Amplifier
 
-```text
-DFPlayer Mini Module (Top View)
-┌─────────────────────────────┐
-│  [MicroSD Card Slot]        │
-│                             │
-│  Pin 1: VCC ←── 5V          │
-│  Pin 2: RX  ←── GP4 (TX)    │
-│  Pin 3: TX  ──→ GP5 (RX)    │
-│  Pin 4: (not used)          │
-│  Pin 5: (not used)          │
-│  Pin 6: SPK_1 ──→ Amp In+   │
-│  Pin 7: GND ←── Common GND  │
-│  Pin 8: SPK_2 ──→ Amp In-   │
-│                             │
-│  [3.5mm Audio Jack]         │
-└─────────────────────────────┘
+1. Wire DFPlayer VCC (pin 1) to the 5 V bus and GND (pin 7) to the star ground, with a 100 µF capacitor across them.
+2. Wire Pico GP4 (pin 6, UART1 TX) to DFPlayer RX (pin 2). Leave DFPlayer TX (pin 3) and Pico GP5 unwired.
+3. Solder a 10 kΩ resistor to each of the amplifier's IN+ leads. Wire DAC_L (pin 5) to one resistor and DAC_R (pin 4) to the other, so both channels meet at IN+. Wire IN− to the star ground.
+4. Leave SPK_1 (pin 6) and SPK_2 (pin 8) unwired: they are the DFPlayer's own 3 W speaker driver, not a line output. The 2025 guide wired the amp from them; 2026 uses DAC_L/DAC_R instead.
+5. Wire the amplifier's OUT+ and OUT− to the speaker with 16 AWG cable, observing polarity.
+6. Check the amplifier's input terminals against its silkscreen before powering it. The design assumes a mono IN+/IN− input ([ADR-010](../reference/adr/0010-single-shared-audio-path.md)).
+7. Insert the MicroSD card prepared in [Prepare Thunder Audio](./prepare-audio.md).
 
-Note: Use either SPK pins OR 3.5mm jack, not both
-      SPK pins provide higher quality output to amplifier
-```
+### 3.5. Rigs
 
-## 3. Power Injection
+Repeat for rig A (level shifter 1Y, pin 3) and rig B (2Y, pin 6).
 
-### 3.1. Dual Supply Wiring Diagram
+1. Cut, or check the strip is already open at, the +5V connection between pixels 150 and 151. Leave GND and data continuous. Each pixel supply then feeds only its own half.
+2. Solder a 330 Ω resistor to the strip's DIN pad at pixel 1.
+3. Run a twisted 22 AWG pair of no more than 2.7 m from the enclosure: data from the level shifter output to the resistor, ground from the star ground to the strip's GND at pixel 1.
+4. Place supply 1 at pixel 1. Fit a 10 A fuse on its positive output and wire it with 18 AWG to the strip's +5V and GND at pixel 1, with a 1000 µF capacitor across them.
+5. Place supply 2 at pixel 151 and wire it the same way to the +5V and GND at pixel 151. Do not connect data here.
 
-```text
-Supply 1 (5V 8A)              Supply 2 (5V 8A)              Supply 3 (12V 5A)
-     │                             │                              │
-     ├─→ Pico 2 (VBUS)             │                              │
-     ├─→ DFPlayer Mini             │                              │
-     ├─→ Logic Level Shifter       │                              │
-     │                             │                              │
-     ├─→ NeoPixels 1-150           ├─→ NeoPixels 151-300          │
-     │   (5V + GND)                │   (5V + GND only)            │
-     │   Data: GP16 → Pixel 1      │   Data flows through strip   │
-     │                             │                              │
-     └─→ Common GND ←──────────────┴──────────────────────────────┴─→ Amplifier
-                                                                       (12V + GND)
-```
+### 3.6. Optional Manual Trigger
 
-**Critical Wiring Notes:**
-
-1. **Data Signal:** Pico GP16 → Pixel 1 → cascades to pixel 300
-   - Data connects ONLY at start (pixel 1)
-   - Do NOT inject data at midpoint
-2. **Power Injection Points:**
-   - Supply 1: Pixel 1 (start of strip)
-   - Supply 2: Pixel 150/151 (midpoint ~2.5m)
-   - Each supply provides 5V + GND to its segment
-3. **Common Ground:**
-   - Connect GND from all three supplies together
-   - Use single heavy wire (18 AWG) between supply GND terminals
-   - Ensures clean logic signals and prevents ground loops
-
-4. **Wire Runs:**
-   - Keep 5V wires short and thick (18 AWG)
-   - Minimise distance from supply to injection point
-   - Use stranded wire for flexibility
+1. Wire a normally open push button between GP15 (pin 20) and 3V3 (pin 36).
+2. Solder a 4.7 kΩ resistor across GP15 (pin 20) and GND (pin 38) at the Pico. The internal pull-down alone can leave GP15 stuck high on the Pico 2 ([Pin Assignments](../reference/hardware.md#2-pin-assignments)).
+3. Set `USE_MANUAL_TRIGGER = True` in `src/main.py`.
 
 ## 4. Safety
 
-**Fusing:**
+Keep the build within the fuse ratings, common ground, wire gauges and 12 mA GPIO limit in [Hardware](../reference/hardware.md). Never bypass a fuse to find a fault, and use ferrules on stranded wire in every screw terminal.
 
-- 10A fast-blow fuse on each 5V supply output
-- 5A fast-blow fuse on 12V supply output
+## 5. Verification
 
-**Decoupling Capacitors:**
-
-- 1000µF 10V electrolytic at pixel 1 (Supply 1 injection point)
-- 1000µF 10V electrolytic at pixel 150 (Supply 2 injection point)
-- 100µF 10V electrolytic near Pico VBUS pin
-- 100µF 10V electrolytic near DFPlayer Mini VCC pin
-
-**Grounding:**
-
-- All grounds MUST be common for logic signals
-- Use star grounding topology (all grounds meet at one point)
-- Keep ground wires short and thick (18 AWG minimum)
-- If experiencing EMI/noise: use single-point ground connection to amplifier
-
-**Wire Selection:**
-
-- 18 AWG for all 5V power distribution (rated 10A)
-- 22 AWG for logic signals (3.3V, GPIO)
-- Use stranded wire for flexibility
-- Keep power wires as short as practical
-
-## 5. Alternative: Canaduino Power Module
-
-If using CANADUINO Breadboard Power Supply Module:
-
-- **Use for:** Pico 2 and DFPlayer Mini only
-- **Configuration:**
-  - One rail: 3.3V or 5V for Pico
-  - Other rail: 3.3V or 5V for MP3 module
-  - 12V rail: Not used (insufficient current for amplifier)
-- **Benefits:** Clean regulated power for logic circuits, USB-C input
-- **NeoPixel Power:** Still requires two dedicated 5V 8A supplies per board
-- **Total per board:** Canaduino (USB-C 2.1A) + 2× 5V 8A + 1× 12V 5A
-
-### 5.1. Level Shifter With Canaduino
-
-If using Canaduino with 3.3V rails:
-
-- **Option 1 (Recommended):** Omit logic level shifter, run NeoPixels with 3.3V data signal
-  - WS2812B will work reliably with 3.3V logic when powered at 5V
-  - Simplifies wiring, one less component
-  - Pico GP16 connects directly to NeoPixel DIN
-- **Option 2 (Original Design):** Keep logic level shifter
-  - Use Canaduino 5V rail as HV (high voltage) reference
-  - Use Canaduino 3.3V rail for Pico LV (low voltage)
-  - Maintains 5V data signal for maximum noise immunity
-
-## 6. Verification
-
-Before connecting the strip's data line, check with a meter that every supply shares a common ground and that each fuse is in circuit. Then follow [Test and Debug](./test-and-debug.md).
+1. With nothing plugged in, check with a meter that every supply's negative, the Pico GND, the DFPlayer GND and each strip's GND at pixels 1 and 151 all read continuity to the star ground.
+2. Check each fuse is in circuit, and that the +5V at pixel 150 and pixel 151 of each strip read open to each other.
+3. Power the logic supply alone and check about 4.7 V at VSYS and 5 V at the level shifter and DFPlayer.
+4. Power everything and follow [Test and Debug](./test-and-debug.md).
 
 [← Back to How-To Guides](./README.md)

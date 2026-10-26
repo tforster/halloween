@@ -31,6 +31,8 @@ dev = [
   "black>=24.0.0", # Code formatting
   "ruff>=0.6.0", # Fast linting
   "mypy>=1.11.0", # Type checking
+  "wireviz>=0.4.1", # Wiring diagram; needs Graphviz
+  "pyyaml>=6.0", # Wiring harness tests read the YAML as data
 ]
 
 [project.urls]
@@ -97,6 +99,11 @@ exclude = [
   '.venv/',
   'venv/',
 ]
+
+# pydub and pyserial ship no type information; treat them as Any rather than add stub packages.
+[[tool.mypy.overrides]]
+module = ["pydub", "serial"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

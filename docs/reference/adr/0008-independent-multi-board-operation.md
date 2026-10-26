@@ -1,6 +1,6 @@
 # ADR-008: Multi-Board Independent Operation <!-- omit in toc -->
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-009](./0009-single-controller-for-multiple-rigs.md) (2026 season). Accepted for 2025.
 
 **Context:**  
 2025 goal is deploying 3 boards across larger display area. Options:
