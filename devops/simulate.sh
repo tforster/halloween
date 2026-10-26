@@ -10,12 +10,11 @@
 #   --help              Show this help message
 #
 # Description:
-#   Start the simulator first (VS Code: "Wokwi: Start Simulator" on wokwi/wokwi.toml). The simulated Pico 2's flash is not
-#   writable (mkfs fails with ENOSPC), so src/ is not copied: mpremote mounts it from the host over the serial link and the firmware
-#   imports from there. Test mode (1-3 s intervals) makes overlapping strikes common, and each rig drives 60 pixels to match
-#   the simulated strips; both are switched on for this run only,
-#   so src/main.py stays as deployed. Wokwi has no DFPlayer part and its Pico 2 hangs opening UART1, so SIMULATED skips the
-#   UART and thunder frames print here instead ("DFPlayer < 7E FF ...").
+#   Start the simulator first (VS Code: "Wokwi: Start Simulator" on wokwi/wokwi.toml). src/ is not copied: mpremote mounts it
+#   from the host over the serial link and the firmware imports from there, so an edit needs only another run. Test mode
+#   (1-3 s intervals) makes overlapping strikes common, and each rig drives 60 pixels to match the simulated strips; both are
+#   switched on for this run only, so src/main.py stays as deployed. Wokwi has no DFPlayer part (and its Pico 2 hung opening
+#   UART1), so SIMULATED skips the UART and thunder frames print here instead ("DFPlayer < 7E FF ...").
 #   Ctrl-C stops the storm.
 #
 ####################################################################################################################################
@@ -60,9 +59,10 @@ fi
 # rig, for this run only) have 60 pixels
 simulatedPixels=60
 
-# resume skips mpremote's soft reset: each reset re-runs _boot.py, which tries to format the unwritable flash and takes
-# longer than mpremote waits for the raw REPL. Importing main does not start it; start() runs after the overrides,
-# which last for this session only
+# resume skips mpremote's soft reset: on MicroPython 1.26.1 each reset re-ran _boot.py, which tried to format the
+# unwritable flash for longer than mpremote waits for the raw REPL. 1.29.0 resets in about a second, but runs without
+# resume still hung entering the raw REPL, so it stays. Importing main does not start it; start() runs after the
+# overrides, which last for this session only
 mpremote connect "port:rfc2217://localhost:${port}" resume mount src exec "import main
 main.TEST_MODE = True
 main.SIMULATED = True

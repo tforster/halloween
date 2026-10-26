@@ -1,6 +1,6 @@
 # Simulate in Wokwi <!-- omit in toc -->
 
-Run the real firmware on a simulated Pico 2 with both strips, watch overlapping strikes and read the thunder commands, without building the hardware. Why Wokwi is used is in [ADR-012](../reference/adr/0012-wireviz-and-wokwi.md).
+Run the real firmware on a simulated Pico with both strips, watch overlapping strikes and read the thunder commands, without building the hardware. Why Wokwi is used is in [ADR-012](../reference/adr/0012-wireviz-and-wokwi.md).
 
 ## Table of Contents <!-- omit in toc -->
 
@@ -16,7 +16,7 @@ Run the real firmware on a simulated Pico 2 with both strips, watch overlapping 
 
 ## 2. Steps
 
-1. In VS Code, run **Wokwi: Select Config File** and choose `wokwi/wokwi.toml`, then **Wokwi: Start Simulator**. The Pico 2 boots the MicroPython image from `devops/image/`; the strips stay dark.
+1. In VS Code, run **Wokwi: Select Config File** and choose `wokwi/wokwi.toml`, then **Wokwi: Start Simulator**. The Pico boots the RPI_PICO MicroPython image from `devops/image/`; the strips stay dark. The simulation uses an RP2040 Pico, not the installation's Pico 2, because Wokwi's RP2350 corrupts MicroPython ([ADR-012](../reference/adr/0012-wireviz-and-wokwi.md)).
 2. Keep the simulator tab visible (a hidden tab can pause the simulation), and in a terminal run:
 
    ```bash
@@ -27,13 +27,13 @@ Run the real firmware on a simulated Pico 2 with both strips, watch overlapping 
 
    For a lighter run with one strip, use `npm run simulate -- --rigs=1`.
 
-3. Press Ctrl-C to stop. The simulated flash is not writable, so nothing is stored on the Pico. Run `npm run simulate` again after restarting the simulator.
+3. Press Ctrl-C to stop. `src/` is mounted, not copied, so nothing is stored on the Pico. Run `npm run simulate` again after restarting the simulator.
 
 ## 3. Verification
 
 - Rig A (top strip, GP16) and Rig B (bottom strip, GP17) strike at different times.
 - Within a few minutes the two rigs strike together, and both strips keep animating through the overlap.
-- Each strike prints `Rig A strikes` (or B) followed by a play-track frame such as `DFPlayer < 7E FF 06 03 00 00 02 FE F6 EF`; Wokwi has no DFPlayer part, and its Pico 2 hangs when MicroPython opens UART1, so the simulated run opens no UART (`main.SIMULATED`) and this output stands in for the DFPlayer. The frame format is in [DFPlayer Mini Protocol](../reference/dfplayer-protocol.md).
+- Each strike prints `Rig A strikes` (or B) followed by a play-track frame such as `DFPlayer < 7E FF 06 03 00 00 02 FE F6 EF`; Wokwi has no DFPlayer part, so the simulated run opens no UART (`main.SIMULATED`) and this output stands in for the DFPlayer. The frame format is in [DFPlayer Mini Protocol](../reference/dfplayer-protocol.md).
 
 ## 4. Troubleshooting
 
@@ -41,6 +41,6 @@ Run the real firmware on a simulated Pico 2 with both strips, watch overlapping 
 | :------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `failed to access rfc2217://localhost:4000`              | The simulator is not running, or another program holds the port. Start it, or pass `npm run simulate -- --port=<n>` to match `rfc2217ServerPort` |
 | `could not enter raw repl`                               | A storm from an earlier run is still going. Restart the simulator (or press Ctrl-A in its serial monitor), then run `npm run simulate` again     |
-| `mpremote` errors that mention the protocol or a version | Install the `mpremote` release matching the image (`pip install mpremote==1.26.1`)                                                               |
+| `mpremote` errors that mention the protocol or a version | Install the `mpremote` release matching the image (`pip install mpremote==1.29.0`)                                                               |
 
 [← Back to How-To Guides](./README.md)
