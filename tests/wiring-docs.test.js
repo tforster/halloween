@@ -218,3 +218,26 @@ describe("2026 hardware docs", () => {
     }
   });
 });
+
+describe("level shifter decoupling, breadboard pull-ups and twisted pairs", () => {
+  it("HALL-9 AC2: the BOM, assembly guide and ASCII diagram list the 100 nF at the level shifter", async () => {
+    for (const file of [
+      "docs/reference/bill-of-materials.md",
+      "docs/how-to/assemble-hardware.md",
+      "docs/reference/wiring-diagram.md",
+    ]) {
+      assert.match(await readRepoFile(file), /100 nF[^\n]*HV/, `${file} does not list the 100 nF across HV`);
+    }
+  });
+
+  it("HALL-9 AC3: the assembly guide allows the pull-ups on the breadboard", async () => {
+    assert.match(await readRepoFile("docs/how-to/assemble-hardware.md"), /1\.5 kΩ[^\n]*breadboard/);
+  });
+
+  it("HALL-9 AC4: the ASCII diagram marks the twisted data pairs and explains the marking", async () => {
+    const diagram = await readRepoFile("docs/reference/wiring-diagram.md");
+    const drawing = diagram.slice(diagram.indexOf("```text"), diagram.indexOf("```", diagram.indexOf("```text") + 3));
+    assert.match(drawing, /═/, "the drawing has no twisted-pair line");
+    assert.match(diagram, /^- `═`[^\n]*twisted pair/m, "the legend does not explain `═`");
+  });
+});

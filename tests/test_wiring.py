@@ -270,6 +270,17 @@ def test_hall8_ac1_each_used_high_side_channel_has_a_1_5_kohm_pull_up_to_hv():
         assert pullUps[0].startswith("1.5 kohm")
 
 
+def test_hall9_ac1_level_shifter_has_100_nf_across_hv_and_gnd():
+    # Decouples the board's 5 V side from the pull-ups' 800 kHz switching current.
+    caps = [
+        part["subtype"]
+        for part in loadHarness()["connectors"]["U1"].get("additional_components", [])
+        if part["type"].startswith("Capacitor")
+    ]
+    assert len(caps) == 1, "the level shifter needs one decoupling capacitor"
+    assert caps[0].startswith("100 nF") and "HV and GND" in caps[0]
+
+
 def test_hall8_ac2_manual_trigger_is_not_fitted():
     harness = loadHarness()
     assert "SW1" not in harness["connectors"]

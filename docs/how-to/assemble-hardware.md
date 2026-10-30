@@ -54,8 +54,9 @@ The BSS138 board prints labels, not pin numbers. HV is its 5 V side and LV its 3
 
 1. Wire HV to the 5 V bus, LV to Pico 3V3 (pin 36), and either GND to the star ground.
 2. Wire Pico GP16 (pin 21) to LV1 and GP17 (pin 22) to LV2.
-3. Solder a 1.5 kΩ resistor across HV1 and HV, and another across HV2 and HV. Without them the board's 10 kΩ pull-ups rise too slowly to drive 2.7 m of cable ([Known Issues](../reference/known-issues.md)).
-4. Leave LV3, LV4, HV3 and HV4 unwired.
+3. Fit a 1.5 kΩ resistor across HV1 and HV, and another across HV2 and HV, soldered or in free breadboard holes in the same strips as those pins. Without them the board's 10 kΩ pull-ups rise too slowly to drive 2.7 m of cable ([Known Issues](../reference/known-issues.md)).
+4. Fit a 100 nF ceramic capacitor across HV and GND, close to the board.
+5. Leave LV3, LV4, HV3 and HV4 unwired.
 
 ### 3.4. DFPlayer Mini and Amplifier
 

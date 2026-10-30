@@ -84,6 +84,9 @@ connectors:
       (pin guide: level-shifter.jpg). Each channel's high side rises only through the board's
       10 kohm pull-up, too slowly for 2.7 m of cable, so R_PU_A and R_PU_B add 1.5 kohm to HV.
       Channels 3 and 4 stay unwired; the board pulls them up
+    additional_components:
+      - type: Capacitor, ceramic
+        subtype: 100 nF, across HV and GND at the board
   DFP:
     type: DFPlayer Mini
     subtype: MP3 player, 9600 baud UART
@@ -105,13 +108,14 @@ connectors:
     subtype: 1.5 kohm 1/4 W, HV1 pull-up to HV
     pinlabels: [IN, OUT]
     notes: >-
-      Soldered across the board's HV1 and HV pins. In parallel with the board's 10 kohm, it sharpens
-      the rising edge over 2.7 m; the Pico sinks about 3.6 mA through it when the line is low
+      Across the board's HV1 and HV pins, soldered or in free breadboard holes. In parallel with
+      the board's 10 kohm, it sharpens the rising edge over 2.7 m; the Pico sinks about 3.6 mA
+      through it when the line is low
   R_PU_B:
     type: Resistor
     subtype: 1.5 kohm 1/4 W, HV2 pull-up to HV
     pinlabels: [IN, OUT]
-    notes: Soldered across the board's HV2 and HV pins, as R_PU_A
+    notes: Across the board's HV2 and HV pins, as R_PU_A
   R_A:
     type: Resistor
     subtype: 330 ohm 1/4 W, series, rig A data
