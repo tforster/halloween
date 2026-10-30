@@ -1,6 +1,6 @@
 # Hardware <!-- omit in toc -->
 
-Specifications for the 2026 installation: two rigs on one Raspberry Pi Pico 2, with one shared MP3 player, amplifier and speaker. This page covers the components, GPIO pin assignments, power budget and supply choices. The full wiring is the [wiring diagram](./assets/wiring.svg), rendered from [`wiring.yml`](./assets/wiring.yml). Assembly steps are in [Assemble the Hardware](../how-to/assemble-hardware.md), and the parts list is in the [Bill of Materials](./bill-of-materials.md).
+Specifications for the 2026 installation: two rigs on one Raspberry Pi Pico 2, with one shared MP3 player, amplifier and speaker. This page covers the components, GPIO pin assignments, power budget and supply choices. The full wiring is the [wiring diagram](./assets/wiring.svg) (or the [ASCII version](./wiring-diagram.md)), rendered from [`wiring.yml`](./assets/wiring.yml). Assembly steps are in [Assemble the Hardware](../how-to/assemble-hardware.md), and the parts list is in the [Bill of Materials](./bill-of-materials.md).
 
 ## Table of Contents <!-- omit in toc -->
 
@@ -19,11 +19,11 @@ Specifications for the 2026 installation: two rigs on one Raspberry Pi Pico 2, w
 | 60 W BTL Class D amplifier | Drives the speaker                     | CANADUINO TPA3118, mono, 12 V input. Fed from the DFPlayer's DAC_L/DAC_R line outputs. [Amazon](https://www.amazon.ca/dp/B0D8HCV43H)                                                                                                                                                           |
 | Speaker                    | Thunder                                | One for the whole display, beside the central enclosure                                                                                                                                                                                                                                        |
 | WS2812B NeoPixel strip     | Lightning, one per rig                 | 300 pixels each, reused from 2025. [Datasheet](https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf)                                                                                                                                                                                           |
-| 74AHCT125 level shifter    | 3.3 V → 5 V data for both strips       | Two of its four channels. WS2812B data needs 5 V logic for noise margin; the AHCT family reads the Pico's 3.3 V as high while running at 5 V                                                                                                                                                   |
+| BSS138 level shifter board | 3.3 V → 5 V data for both strips       | Generic 4-channel MOSFET board (HV1–4, LV1–4, HV, LV, GND), two channels used, reused from 2025 ([ADR-013](./adr/0013-reused-bss138-level-shifter.md)). WS2812B data needs 5 V logic for noise margin. [Pin guide](./assets/level-shifter.jpg)                                                 |
+| 1.5 kΩ resistors (2)       | Pull-ups on HV1 and HV2                | Soldered across HV1–HV and HV2–HV; the board's own 10 kΩ rises too slowly over 2.7 m ([Known Issues](./known-issues.md))                                                                                                                                                                       |
 | 1N5817 Schottky diode      | Pico power from the logic rail         | Into VSYS, so USB and the logic rail never feed each other ([Pico 2 datasheet](https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf), Powering Pico)                                                                                                                                   |
 | 330 Ω resistors (2)        | Series resistor at each strip's DIN    | Damps reflections on the long data runs                                                                                                                                                                                                                                                        |
 | 10 kΩ resistors (2)        | Sum DAC_L and DAC_R into the amp input | Mixes both channels into the mono input without shorting the DAC outputs together                                                                                                                                                                                                              |
-| 4.7 kΩ resistor            | GP15 pull-down                         | Optional manual trigger only; see [Pin Assignments](#2-pin-assignments)                                                                                                                                                                                                                        |
 | 5 V logic supply           | Pico, DFPlayer and level shifter       | See [Power Supplies](#4-power-supplies)                                                                                                                                                                                                                                                        |
 | 5 V pixel supplies (4)     | Two per rig                            | At pixel 1 and pixel 151 of each strip                                                                                                                                                                                                                                                         |
 | 12 V supply                | Amplifier                              | Kept separate from the 5 V rails                                                                                                                                                                                                                                                               |
@@ -32,20 +32,21 @@ Specifications for the 2026 installation: two rigs on one Raspberry Pi Pico 2, w
 
 ## 2. Pin Assignments
 
-| GPIO (pin)    | Function       | Direction | Hardware Connection                                       | Rationale                                                                                                                                                             |
-| ------------- | -------------- | --------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **GP16** (21) | Rig A data     | Output    | 74AHCT125 1A → 1Y → 330 Ω → rig A DIN                     | Not used by either UART; PIO drives the WS2812B timing                                                                                                                |
-| **GP17** (22) | Rig B data     | Output    | 74AHCT125 2A → 2Y → 330 Ω → rig B DIN                     | Next to GP16, also PIO-capable                                                                                                                                        |
-| **GP4** (6)   | MP3 TX         | Output    | Pico UART1 TX → DFPlayer RX (pin 2)                       | UART1, so UART0 stays free for USB serial debugging                                                                                                                   |
-| **GP5** (7)   | MP3 RX         | Input     | Unwired                                                   | UART1 RX, reserved; commands are sent without feedback                                                                                                                |
-| **GP15** (20) | Manual trigger | Input     | Button to 3V3 (pin 36), 4.7 kΩ pull-down to GND, optional | External pull-down because RP2350 erratum E9 can latch the pad at about 2 V, which the internal pull-down cannot clear; enable with `USE_MANUAL_TRIGGER` in `main.py` |
-| **GP25**      | Status LED     | Output    | Onboard LED                                               | Solid during start-up, then a 1 Hz heartbeat                                                                                                                          |
-| **VSYS** (39) | Power in       | —         | 5 V logic rail through the 1N5817 cathode                 | Diode-OR with USB; see [Components](#1-components)                                                                                                                    |
-| **VBUS** (40) | —              | —         | Unwired                                                   | Feeding it would back-feed a laptop's USB port                                                                                                                        |
+| GPIO (pin)    | Function   | Direction | Hardware Connection                       | Rationale                                                                                                                         |
+| ------------- | ---------- | --------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **GP16** (21) | Rig A data | Output    | BSS138 LV1 → HV1 → 330 Ω → rig A DIN      | Not used by either UART; PIO drives the WS2812B timing                                                                            |
+| **GP17** (22) | Rig B data | Output    | BSS138 LV2 → HV2 → 330 Ω → rig B DIN      | Next to GP16, also PIO-capable                                                                                                    |
+| **GP4** (6)   | MP3 TX     | Output    | Pico UART1 TX → DFPlayer RX (pin 2)       | UART1, so UART0 stays free for USB serial debugging                                                                               |
+| **GP5** (7)   | MP3 RX     | Input     | Unwired                                   | UART1 RX, reserved; commands are sent without feedback                                                                            |
+| **GP15** (20) | —          | —         | Unwired                                   | Manual trigger not fitted in 2026 ([blueprint](../explanation/2026-blueprint.md#41-hardware)); `USE_MANUAL_TRIGGER` stays `False` |
+| **GP25**      | Status LED | Output    | Onboard LED                               | Solid during start-up, then a 1 Hz heartbeat                                                                                      |
+| **VSYS** (39) | Power in   | —         | 5 V logic rail through the 1N5817 cathode | Diode-OR with USB; see [Components](#1-components)                                                                                |
+| **3V3** (36)  | Power out  | —         | BSS138 LV                                 | Sets the level shifter's low-side reference                                                                                       |
+| **VBUS** (40) | —          | —         | Unwired                                   | Feeding it would back-feed a laptop's USB port                                                                                    |
 
-Pico GPIO pins source at most 12 mA each; drive nothing heavier than the level shifter or a switch directly.
+Pico GPIO pins source at most 12 mA each; drive nothing heavier than the level shifter directly. With the 1.5 kΩ pull-ups, GP16 and GP17 each sink about 3.6 mA when low.
 
-The 74AHCT125's output enables (1OE, 2OE) are active low and go to GND. The unused channels' inputs and enables (3A, 3OE, 4A, 4OE) also go to GND, because CMOS inputs must not float.
+The BSS138 board's HV is the 5 V side and LV the 3.3 V side. Channels 3 and 4 stay unwired; the board's own pull-ups hold them.
 
 ## 3. Power Requirements
 
@@ -53,7 +54,7 @@ The 74AHCT125's output enables (1OE, 2OE) are active low and go to GND. The unus
 | ------------------- | ---------- | ------------------- | ---------------- | ---------------------------------------------------- |
 | **Pico 2**          | 5 V (VSYS) | 50–100 mA           | 150 mA           | About 4.7 V after the Schottky; VSYS takes 1.8–5.5 V |
 | **DFPlayer Mini**   | 5 V        | 20–30 mA idle       | 200 mA peak      |                                                      |
-| **74AHCT125**       | 5 V        | <1 mA               | 10 mA            |                                                      |
+| **BSS138 board**    | 5 V        | <1 mA idle          | 8 mA             | Through the HV pull-ups while the data lines are low |
 | **NeoPixels (150)** | 5 V        | 2.5–3 A (lightning) | 9 A (full white) | Lightning uses about 30% duty cycle per segment      |
 | **60 W amplifier**  | 12 V       | Variable            | 5 A              | 60 W needs 24 V into 2 Ω; at 12 V it delivers less   |
 
@@ -61,16 +62,16 @@ A full-white flash of one 300-pixel strip draws about 18 A in theory; the lightn
 
 ## 4. Power Supplies
 
-Six supplies, each with a fuse on its positive output and all on one common ground:
+Six supplies, all on one common ground. No fuses are fitted in 2026 ([blueprint](../explanation/2026-blueprint.md#41-hardware)): each supply's own short-circuit protection is the only guard.
 
-| Supply  | Rating   | Powers                    | Location                 | Fuse           |
-| ------- | -------- | ------------------------- | ------------------------ | -------------- |
-| PSU_L   | 5 V 3 A  | Pico, DFPlayer, 74AHCT125 | By the central enclosure | 2 A fast-blow  |
-| PSU_A1  | 5 V 8 A  | Rig A pixels 1–150        | At rig A pixel 1         | 10 A fast-blow |
-| PSU_A2  | 5 V 8 A  | Rig A pixels 151–300      | At rig A pixel 151       | 10 A fast-blow |
-| PSU_B1  | 5 V 8 A  | Rig B pixels 1–150        | At rig B pixel 1         | 10 A fast-blow |
-| PSU_B2  | 5 V 8 A  | Rig B pixels 151–300      | At rig B pixel 151       | 10 A fast-blow |
-| PSU_AMP | 12 V 5 A | Amplifier only            | By the central enclosure | 5 A fast-blow  |
+| Supply  | Rating   | Powers                 | Location                 |
+| ------- | -------- | ---------------------- | ------------------------ |
+| PSU_L   | 5 V 3 A  | Pico, DFPlayer, BSS138 | By the central enclosure |
+| PSU_A1  | 5 V 8 A  | Rig A pixels 1–150     | At rig A pixel 1         |
+| PSU_A2  | 5 V 8 A  | Rig A pixels 151–300   | At rig A pixel 151       |
+| PSU_B1  | 5 V 8 A  | Rig B pixels 1–150     | At rig B pixel 1         |
+| PSU_B2  | 5 V 8 A  | Rig B pixels 151–300   | At rig B pixel 151       |
+| PSU_AMP | 12 V 5 A | Amplifier only         | By the central enclosure |
 
 - **Logic supply:** powers only the Pico, DFPlayer and level shifter. Why the logic rail is separate is in [ADR-009](./adr/0009-single-controller-for-multiple-rigs.md).
 - **Pixel supplies:** 5 V 8 A or larger, such as the reused 2025 supplies, one per 150-pixel half. One supply on 300 pixels over 5 m drops to 4.2–4.5 V at the far end, below the WS2812B specification.

@@ -19,6 +19,7 @@ Why the project is built the way it is, one decision per file. ADR-001 to ADR-00
 | [ADR-010](./0010-single-shared-audio-path.md)              | Single Shared Audio Path, Latest Strike Wins           | Accepted (2026 season) |
 | [ADR-011](./0011-asyncio-scheduling.md)                    | asyncio Scheduling                                     | Accepted (2026 season) |
 | [ADR-012](./0012-wireviz-and-wokwi.md)                     | WireViz and Wokwi for Hardware Diagrams and Simulation | Accepted (2026 season) |
+| [ADR-013](./0013-reused-bss138-level-shifter.md)           | Reused BSS138 Level Shifter Board                      | Accepted (2026 season) |
 
 ## 2. Adding a Record
 

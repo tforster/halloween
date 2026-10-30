@@ -33,7 +33,7 @@ npm run lint:py          # ruff on devops/
 - **Hardware boundary:** strips, UART, clock and random source are created once in `main.start()` and passed in, so the scheduler runs under host pytest with fakes. Keep hardware imports (`machine`, `neopixel`) inside `start()` and the REPL helpers only. Patterns must `await` the clock, never `time.sleep()`, or every rig stalls.
 - **DFPlayer frames:** frame format, start-up and inter-command delays, and the known-good test frames are in `docs/reference/dfplayer-protocol.md`; check any protocol or timing change against it.
 - **Timing:** a full 300-pixel write blocks for about 9 ms. NeoPixel and UART timing gotchas are in `docs/reference/known-issues.md`; read it before touching either.
-- **Electrical safety:** fuses, common ground, separate amplifier supply and the 12 mA GPIO limit are in `docs/reference/hardware.md`; keep any wiring or power change within them.
+- **Electrical safety:** common ground, separate amplifier supply and the 12 mA GPIO limit are in `docs/reference/hardware.md`; keep any wiring or power change within them. The 2026 build fits no fuses; each supply's own short-circuit protection is the only guard.
 - **Wiring:** `docs/reference/assets/wiring.yml` (WireViz) is the source of truth; change it, run `npm run wiring` and commit the SVG with it, or `npm run test:py` fails.
 - **Deployment:** from 2026 there is one board. `npm run deploy` copies all of `src/` to the Pico root.
 

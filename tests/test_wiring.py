@@ -1,9 +1,10 @@
 """
 The WireViz harness in docs/reference/assets/wiring.yml, read as data.
 
-Expected values come from the 2026 blueprint (docs/explanation/2026-blueprint.md, section 4.1) and
-the HALL-4 grilling answers, not from the YAML: supplies and fuse ratings, pins, the 2.7 m data
-limit, and the DAC_L/DAC_R amp feed.
+Expected values come from the 2026 blueprint (docs/explanation/2026-blueprint.md, section 4.1), the
+HALL-4 grilling answers and the HALL-8 corrections (ADR-013), not from the YAML: supplies, pins, the
+2.7 m data limit, the DAC_L/DAC_R amp feed, and the reused BSS138 level shifter with no fuses or
+manual trigger.
 """
 
 from pathlib import Path
@@ -104,34 +105,30 @@ def connected(harness, first, second):
     return find(pinNode(harness, *first)) == find(pinNode(harness, *second))
 
 
-# Every supply and the fuse on its positive output, from blueprint section 4.1 and the HALL-4
-# answer to add a dedicated logic supply.
+# Every supply and the input it feeds directly, from blueprint section 4.1: no fuses are fitted in
+# 2026.
 SUPPLIES = {
-    "PSU_L": ("+5V", "2 A"),
-    "PSU_A1": ("+5V", "10 A"),
-    "PSU_A2": ("+5V", "10 A"),
-    "PSU_B1": ("+5V", "10 A"),
-    "PSU_B2": ("+5V", "10 A"),
-    "PSU_AMP": ("+12V", "5 A"),
+    "PSU_L": ("+5V", ("DFP", "VCC")),
+    "PSU_A1": ("+5V", ("STRIP_A", "+5V px1")),
+    "PSU_A2": ("+5V", ("STRIP_A", "+5V px151")),
+    "PSU_B1": ("+5V", ("STRIP_B", "+5V px1")),
+    "PSU_B2": ("+5V", ("STRIP_B", "+5V px151")),
+    "PSU_AMP": ("+12V", ("AMP", "+12V")),
 }
 
 
-def test_ac2_every_supply_output_goes_through_its_rated_fuse():
+def test_hall8_ac2_no_fuses_and_each_supply_feeds_its_load_directly():
     harness = loadHarness()
     connectors = harness["connectors"]
     supplies = {
         name for name, part in connectors.items() if part.get("type", "").startswith("Power supply")
     }
     assert supplies == set(SUPPLIES)
-    for supply, (rail, rating) in SUPPLIES.items():
-        fuses = [
-            name
-            for name, part in connectors.items()
-            if part.get("type", "").startswith("Fuse")
-            and connected(harness, (supply, rail), (name, "IN"))
-        ]
-        assert len(fuses) == 1, f"{supply} {rail} should feed exactly one fuse"
-        assert rating in connectors[fuses[0]]["subtype"], f"{supply} fuse should be {rating}"
+    assert not [
+        name for name, part in connectors.items() if part.get("type", "").startswith("Fuse")
+    ]
+    for supply, (rail, load) in SUPPLIES.items():
+        assert connected(harness, (supply, rail), load), f"{supply} {rail} should feed {load}"
 
 
 # Every part with a ground, from blueprint section 4.1: all grounds are common.
@@ -156,11 +153,11 @@ def cablesBetween(harness, first, second):
     return found
 
 
-# Rig data path from blueprint section 4.1: GPIO, level shifter channel, 330 ohm series resistor
-# at the strip's data input.
+# Rig data path from blueprint section 4.1 and ADR-013: GPIO, BSS138 level shifter channel (low side
+# in, high side out), 330 ohm series resistor at the strip's data input.
 RIGS = {
-    "STRIP_A": {"gpio": "GP16", "shifterIn": "1A", "shifterOut": "1Y", "resistor": "R_A"},
-    "STRIP_B": {"gpio": "GP17", "shifterIn": "2A", "shifterOut": "2Y", "resistor": "R_B"},
+    "STRIP_A": {"gpio": "GP16", "shifterIn": "LV1", "shifterOut": "HV1", "resistor": "R_A"},
+    "STRIP_B": {"gpio": "GP17", "shifterIn": "LV2", "shifterOut": "HV2", "resistor": "R_B"},
 }
 
 
@@ -250,34 +247,34 @@ def test_ac2_pico_runs_from_the_logic_rail_through_a_schottky_into_vsys_never_vb
     assert not isWired(harness, "PICO", "VBUS")
 
 
-def test_ac2_level_shifter_runs_at_5_v_with_both_used_channels_enabled():
+def test_hall8_ac1_level_shifter_bridges_the_3v3_and_5_v_rails():
     harness = loadHarness()
-    assert connected(harness, ("U1", "VCC"), ("DFP", "VCC"))
-    for enable in ("1OE", "2OE"):
-        assert connected(harness, ("U1", enable), ("PICO", "GND")), f"{enable} is active low"
+    assert "BSS138" in harness["connectors"]["U1"]["subtype"]
+    assert connected(harness, ("U1", "HV"), ("DFP", "VCC")), "HV is the 5 V side"
+    assert connected(harness, ("U1", "LV"), ("PICO", "3V3")), "LV is the Pico's 3.3 V side"
 
 
-def test_ac2_optional_manual_trigger_switches_gp15_to_3v3():
+def test_hall8_ac1_each_used_high_side_channel_has_a_1_5_kohm_pull_up_to_hv():
+    # The board's own 10 kohm pull-ups rise too slowly to drive 2.7 m of cable at 800 kHz; a
+    # 1.5 kohm in parallel speeds the edge while keeping the Pico's sink current under 4 mA.
     harness = loadHarness()
-    switch = harness["connectors"]["SW1"]
-    assert "optional" in switch["subtype"].lower()
-    assert connected(harness, ("PICO", "GP15"), ("SW1", "1"))
-    assert connected(harness, ("PICO", "3V3"), ("SW1", "2"))
+    for rig in RIGS.values():
+        pullUps = [
+            part["subtype"]
+            for name, part in harness["connectors"].items()
+            if part.get("type") == "Resistor"
+            and connected(harness, (name, "IN"), ("U1", rig["shifterOut"]))
+            and connected(harness, (name, "OUT"), ("U1", "HV"))
+        ]
+        assert len(pullUps) == 1, f"{rig['shifterOut']} needs one pull-up to HV"
+        assert pullUps[0].startswith("1.5 kohm")
 
 
-def test_ac2_manual_trigger_has_an_external_pull_down_for_rp2350_erratum_e9():
-    # RP2350 erratum E9: after a pad is driven high, its input can latch at about 2 V, and the
-    # internal pull-down cannot pull it back. An external pull-down of 8.2 kohm or less can.
+def test_hall8_ac2_manual_trigger_is_not_fitted():
     harness = loadHarness()
-    pullDowns = [
-        part["subtype"]
-        for name, part in harness["connectors"].items()
-        if part.get("type") == "Resistor"
-        and connected(harness, (name, "IN"), ("PICO", "GP15"))
-        and connected(harness, (name, "OUT"), ("PICO", "GND"))
-    ]
-    assert len(pullDowns) == 1, "GP15 needs one external pull-down to GND"
-    assert float(pullDowns[0].split(" kohm")[0]) <= 8.2
+    assert "SW1" not in harness["connectors"]
+    assert "R_PD" not in harness["connectors"]
+    assert "GP15" not in harness["connectors"]["PICO"]["pinlabels"]
 
 
 def test_net_helpers_catch_a_miswired_harness():
