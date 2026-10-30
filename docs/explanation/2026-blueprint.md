@@ -93,7 +93,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
   - One dedicated 5 V 3 A logic supply for the Pico, DFPlayer and level shifter, so a full-white flash cannot sag the controller and no 5 V power runs the 2.7 m back from a strip.
   - One 12 V 5 A supply for the amplifier.
   - All grounds are common, meeting at a star-ground terminal block in the enclosure; each rig's grounds reach it through its data pair. No fuses are fitted: each supply's own short-circuit protection is the only guard, so polarity is checked before power-on and supplies are powered one at a time.
-  - Decoupling capacitors as in 2025.
+  - Decoupling capacitors as in 2025, plus 100 nF across the level shifter's HV and GND.
 - **Placement:** controller, level shifter, DFPlayer and amplifier in one central enclosure, with the logic and amplifier supplies beside it. Each pixel supply sits at its injection point. Only the speaker cable and the two data/ground pairs run out to the rigs.
 
 ### 4.2. Software

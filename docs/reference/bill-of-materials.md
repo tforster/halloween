@@ -33,6 +33,7 @@ Parts list for the 2026 installation: two rigs on one Pico 2, with one shared DF
 - 2 × 330 Ω 1/4 W resistors (series, at each strip's DIN)
 - 2 × 10 kΩ 1/4 W resistors (sum DAC_L and DAC_R into the amp input)
 - 2 × 1.5 kΩ 1/4 W resistors (pull-ups across the level shifter's HV1–HV and HV2–HV)
+- 1 × 100 nF ceramic capacitor (level shifter, across HV and GND)
 - 4 × 1000 µF 10 V electrolytic capacitors (one at each injection point)
 - 2 × 100 µF 10 V electrolytic capacitors (Pico VSYS, DFPlayer VCC)
 
