@@ -85,3 +85,77 @@ describe("two-rig hardware docs", () => {
     assert.match(await readRepoFile("docs/how-to/assemble-hardware.md"), /!\[[^\]]+\]\(\.\.\/reference\/assets\/wiring\.svg\)/);
   });
 });
+
+// Every part in wiring.yml, as the ASCII diagram names it, from the HALL-7 acceptance criteria.
+const diagramParts = [
+  "PSU_L",
+  "PSU_A1",
+  "PSU_A2",
+  "PSU_B1",
+  "PSU_B2",
+  "PSU_AMP",
+  "F_L",
+  "F_A1",
+  "F_A2",
+  "F_B1",
+  "F_B2",
+  "F_AMP",
+  "TB_5V",
+  "TB_GND",
+  "D1",
+  "Pico 2",
+  "74AHCT125 (U1)",
+  "DFPlayer Mini",
+  "TPA3118",
+  "Speaker",
+  "Rig A",
+  "Rig B",
+  "SW1",
+  "R_PD",
+  "R_A",
+  "R_B",
+  "R_SUM_L",
+  "R_SUM_R",
+];
+
+// Physical pin numbers as wiring.yml numbers them: Pico 2, 74AHCT125 and DFPlayer.
+const diagramPins = [
+  "GP4 6",
+  "GP15 20",
+  "GP16 21",
+  "GP17 22",
+  "3V3 36",
+  "GND 38",
+  "VSYS 39",
+  "VBUS 40",
+  "2 1A",
+  "1Y 3",
+  "5 2A",
+  "2Y 6",
+  "GND 7",
+  "VCC 14",
+  "VCC 1",
+  "2 RX",
+  "DAC_R 4",
+  "DAC_L 5",
+];
+
+describe("ASCII wiring diagram", () => {
+  const diagramFile = "docs/reference/wiring-diagram.md";
+
+  it("HALL-7 AC1: the diagram is in the reference docs, indexed and linked from the assembly guide", async () => {
+    assert.match(await readRepoFile("docs/reference/README.md"), /\]\(\.\/wiring-diagram\.md\)/);
+    assert.match(await readRepoFile("docs/how-to/assemble-hardware.md"), /\]\(\.\.\/reference\/wiring-diagram\.md\)/);
+  });
+
+  it("HALL-7 AC2: the diagram shows every wiring.yml part with its physical pin numbers", async () => {
+    // Collapse runs of spaces so pin labels can be padded for alignment in the drawing.
+    const diagram = (await readRepoFile(diagramFile)).replace(/ +/g, " ");
+    for (const part of diagramParts) assert.ok(diagram.includes(part), `diagram is missing ${part}`);
+    for (const pin of diagramPins) assert.ok(diagram.includes(pin), `diagram is missing pin ${pin}`);
+  });
+
+  it("HALL-7 AC3: the diagram defers to wiring.yml", async () => {
+    assert.match(await readRepoFile(diagramFile), /\[`wiring\.yml`\]\(\.\/assets\/wiring\.yml\)[^.]*wins/);
+  });
+});

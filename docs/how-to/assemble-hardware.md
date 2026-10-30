@@ -28,6 +28,8 @@ The diagram is the reference for every connection: parts, physical pin numbers, 
 
 ![Two-rig wiring diagram](../reference/assets/wiring.svg)
 
+The SVG is wide and needs a viewer that pans and zooms. The [Wiring Diagram](../reference/wiring-diagram.md) reference shows the same parts and pins as an ASCII box diagram that reads at a glance.
+
 ## 3. Steps
 
 Wire with every supply unplugged.
