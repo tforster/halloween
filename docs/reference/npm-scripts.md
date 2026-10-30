@@ -11,23 +11,25 @@ Every script in `package.json`, grouped by what it works on. Run each as `npm ru
 
 ## 1. Repo
 
-| Script         | Runs                               | Purpose                                    |
-| :------------- | :--------------------------------- | :----------------------------------------- |
-| `test`         | `node --test "tests/**/*.test.js"` | Repo convention tests                      |
-| `lint`         | `oxlint`                           | Lint JavaScript                            |
-| `format`       | `oxfmt --write`                    | Format JavaScript, JSON, Markdown and TOML |
-| `format:check` | `oxfmt --check`                    | Report formatting without writing          |
+| Script         | Runs                                      | Purpose                                                                                         |
+| :------------- | :---------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| `test`         | `node --test "tests/**/*.test.js"`        | Repo convention tests                                                                           |
+| `lint`         | `oxlint`                                  | Lint JavaScript                                                                                 |
+| `format`       | `oxfmt --write`                           | Format JavaScript, JSON, Markdown and TOML                                                      |
+| `format:check` | `oxfmt --check`                           | Report formatting without writing                                                               |
+| `typecheck`    | `tsc -p jsconfig.json && npm run type:py` | Type-check JavaScript (JSDoc, no emit) and host-side Python; uses `venv/` without activating it |
 
 ## 2. Python Host Tools
 
 These need the virtual environment and `requirements-dev.txt`.
 
-| Script      | Runs                 | Purpose                           |
-| :---------- | :------------------- | :-------------------------------- |
-| `lint:py`   | `ruff check devops/` | Lint host-side Python             |
-| `format:py` | `black devops/`      | Format host-side Python           |
-| `type:py`   | `mypy devops/`       | Type-check host-side Python       |
-| `test:py`   | `pytest`             | Firmware tests with fake hardware |
+| Script      | Runs                                            | Purpose                                                                                    |
+| :---------- | :---------------------------------------------- | :----------------------------------------------------------------------------------------- |
+| `lint:py`   | `ruff check devops/`                            | Lint host-side Python                                                                      |
+| `format:py` | `black devops/`                                 | Format host-side Python                                                                    |
+| `type:py`   | `venv/bin/mypy devops/`                         | Type-check host-side Python                                                                |
+| `test:py`   | `pytest`                                        | Firmware and wiring harness tests with fake hardware                                       |
+| `wiring`    | `wireviz -f s docs/reference/assets/wiring.yml` | Render the [wiring harness](./assets/wiring.yml) to `wiring.svg` beside it; needs Graphviz |
 
 ## 3. Audio
 

@@ -37,7 +37,7 @@ def prepare_audio_files(source_dir: Path, output_dir: Path, dry_run: bool = Fals
         dry_run: If True, show what would be done without modifying files
     """
     # Find all audio files
-    audio_files = []
+    audio_files: list[Path] = []
     for ext in ['*.mp3', '*.MP3', '*.wav', '*.WAV']:
         audio_files.extend(source_dir.glob(ext))
     

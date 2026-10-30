@@ -7,6 +7,10 @@
 pytest>=8.0.0
 pytest-cov>=4.1.0
 
+# Wiring diagram (docs/reference/assets/wiring.yml); needs Graphviz: sudo apt install graphviz
+wireviz>=0.4.1
+pyyaml>=6.0     # tests/test_wiring.py reads the harness as data
+
 # Code quality
 black>=24.0.0       # Code formatting
 ruff>=0.6.0         # Fast linting

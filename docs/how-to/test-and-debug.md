@@ -78,6 +78,7 @@ The frames it sends are described in [DFPlayer Mini Protocol](../reference/dfpla
 npm test           # repo convention tests (node:test)
 npm run lint       # oxlint
 npm run format:check
+npm run typecheck  # tsc on tests/ JS, then mypy on devops/
 npm run lint:py    # ruff on devops/
 npm run type:py    # mypy on devops/
 npm run test:py    # pytest: firmware scheduler and DFPlayer frames, with fake hardware

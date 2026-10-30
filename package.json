@@ -23,16 +23,20 @@
     "lint:py": "ruff check devops/",
     "format:py": "black devops/",
     "test:py": "pytest",
-    "type:py": "mypy devops/",
+    "type:py": "venv/bin/mypy devops/",
+    "wiring": "wireviz -f s docs/reference/assets/wiring.yml",
     "serve": "devops/serve.sh",
     "serve:stop": "devops/serve.sh --stop",
     "run": "devops/run.sh",
     "run:repl": "devops/run.sh --repl",
     "deploy": "devops/deploy.sh",
-    "simulate": "devops/simulate.sh"
+    "simulate": "devops/simulate.sh",
+    "typecheck": "tsc -p jsconfig.json && npm run type:py"
   },
   "devDependencies": {
+    "@types/node": "^26.6.6",
     "oxfmt": "^0.73.0",
-    "oxlint": "^1.89.0"
+    "oxlint": "^1.89.0",
+    "typescript": "^7.0.2"
   }
 }

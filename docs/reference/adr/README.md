@@ -14,7 +14,9 @@ Why the project is built the way it is, one decision per file. ADR-001 to ADR-00
 | [ADR-005](./0005-migrate-from-esp32-to-pico-2.md)          | Migration from ESP32 to Raspberry Pi Pico 2 (2025)     | Accepted (2025 season) |
 | [ADR-006](./0006-external-mp3-player-module.md)            | External MP3 Player Module for Audio                   | Accepted               |
 | [ADR-007](./0007-random-interval-autonomous-triggering.md) | Random Interval Autonomous Triggering                  | Accepted               |
-| [ADR-008](./0008-independent-multi-board-operation.md)     | Multi-Board Independent Operation                      | Accepted               |
+| [ADR-008](./0008-independent-multi-board-operation.md)     | Multi-Board Independent Operation                      | Superseded by ADR-009  |
+| [ADR-009](./0009-single-controller-for-multiple-rigs.md)   | Single Controller for Multiple Rigs                    | Accepted (2026 season) |
+| [ADR-010](./0010-single-shared-audio-path.md)              | Single Shared Audio Path, Latest Strike Wins           | Accepted (2026 season) |
 | [ADR-011](./0011-asyncio-scheduling.md)                    | asyncio Scheduling                                     | Accepted (2026 season) |
 | [ADR-012](./0012-wireviz-and-wokwi.md)                     | WireViz and Wokwi for Hardware Diagrams and Simulation | Accepted (2026 season) |
 
