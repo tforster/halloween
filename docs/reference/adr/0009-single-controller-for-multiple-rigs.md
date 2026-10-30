@@ -10,7 +10,7 @@ In 2025 three complete boards each drove one strip: three Pico 2s, three MP3 pla
 3. **One controller, central placement:** one Pico 2 between the rigs, each strip's pixel 1 no more than 2.7 m from the level shifter.
 
 **Decision:**
-One Raspberry Pi Pico 2 in a central enclosure drives both rigs: rig A data on GP16, rig B on GP17, through two channels of one 74AHCT125 and a 330 Ω series resistor at each strip's data input. Each data run is a twisted data/ground pair of at most 2.7 m. The rigs are a configuration list, so the firmware is not tied to two. The wiring is in the [WireViz harness](../assets/wiring.yml).
+One Raspberry Pi Pico 2 in a central enclosure drives both rigs: rig A data on GP16, rig B on GP17, through two channels of the reused BSS138 level shifter board ([ADR-013](./0013-reused-bss138-level-shifter.md); this record first named a 74AHCT125 in error) and a 330 Ω series resistor at each strip's data input. Each data run is a twisted data/ground pair of at most 2.7 m. The rigs are a configuration list, so the firmware is not tied to two. The wiring is in the [WireViz harness](../assets/wiring.yml).
 
 **Rationale:**
 

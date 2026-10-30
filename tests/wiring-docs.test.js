@@ -86,7 +86,7 @@ describe("two-rig hardware docs", () => {
   });
 });
 
-// Every part in wiring.yml, as the ASCII diagram names it, from the HALL-7 acceptance criteria.
+// Every part in wiring.yml, as the ASCII diagram names it, from the HALL-7 and HALL-8 acceptance criteria.
 const diagramParts = [
   "PSU_L",
   "PSU_A1",
@@ -94,46 +94,40 @@ const diagramParts = [
   "PSU_B1",
   "PSU_B2",
   "PSU_AMP",
-  "F_L",
-  "F_A1",
-  "F_A2",
-  "F_B1",
-  "F_B2",
-  "F_AMP",
   "TB_5V",
   "TB_GND",
   "D1",
   "Pico 2",
-  "74AHCT125 (U1)",
+  "BSS138 (U1)",
   "DFPlayer Mini",
   "TPA3118",
   "Speaker",
   "Rig A",
   "Rig B",
-  "SW1",
-  "R_PD",
+  "R_PU_A",
+  "R_PU_B",
   "R_A",
   "R_B",
   "R_SUM_L",
   "R_SUM_R",
 ];
 
-// Physical pin numbers as wiring.yml numbers them: Pico 2, 74AHCT125 and DFPlayer.
+// Pin labels as wiring.yml gives them: Pico 2 and DFPlayer physical pins, and the BSS138 board's printed labels.
 const diagramPins = [
   "GP4 6",
-  "GP15 20",
   "GP16 21",
   "GP17 22",
   "3V3 36",
   "GND 38",
   "VSYS 39",
   "VBUS 40",
-  "2 1A",
-  "1Y 3",
-  "5 2A",
-  "2Y 6",
+  "LV1",
+  "HV1",
+  "LV2",
+  "HV2",
+  "LV",
+  "HV",
   "GND 7",
-  "VCC 14",
   "VCC 1",
   "2 RX",
   "DAC_R 4",
@@ -157,5 +151,70 @@ describe("ASCII wiring diagram", () => {
 
   it("HALL-7 AC3: the diagram defers to wiring.yml", async () => {
     assert.match(await readRepoFile(diagramFile), /\[`wiring\.yml`\]\(\.\/assets\/wiring\.yml\)[^.]*wins/);
+  });
+});
+
+// The docs a builder follows for the 2026 wiring, which HALL-8 corrected to the parts actually used.
+const asBuiltDocs = [...hardwareDocs, "docs/reference/wiring-diagram.md", "docs/explanation/2026-blueprint.md"];
+
+/**
+ * Lists the lines of a repo file that match a pattern but not an allowed context.
+ *
+ * @param {string} file - Repo-relative path.
+ * @param {RegExp} pattern - What a line must not describe as fitted.
+ * @param {RegExp} allowed - Context that marks the line as a correction or a not-fitted mention.
+ * @returns {Promise<string[]>} The offending lines, trimmed.
+ */
+async function unqualifiedLines(file, pattern, allowed) {
+  const lines = (await readRepoFile(file)).split("\n");
+  return lines.filter((line) => pattern.test(line) && !allowed.test(line)).map((line) => line.trim());
+}
+
+describe("2026 hardware docs", () => {
+  // A line may still name a part when it says the part is not fitted, or that naming it was an error.
+  const notFitted = /in error|not fitted|no fuses?|unwired|unfused|firmware only/i;
+
+  it("HALL-8 AC3: the docs use the reused BSS138 board, not the 74AHCT125", async () => {
+    for (const file of asBuiltDocs) {
+      assert.match(await readRepoFile(file), /BSS138/, `${file} does not describe the BSS138 board`);
+      assert.deepEqual(await unqualifiedLines(file, /74AHCT125|AHCT/, notFitted), [], `${file} still fits the 74AHCT125`);
+    }
+  });
+
+  it("HALL-8 AC3: the docs fit no fuses and no manual trigger", async () => {
+    for (const file of asBuiltDocs) {
+      assert.deepEqual(await unqualifiedLines(file, /\bfuses?\b|\bF_(L|A1|A2|B1|B2|AMP)\b/i, notFitted), [], `${file} fits fuses`);
+      assert.deepEqual(
+        await unqualifiedLines(file, /\bSW1\b|\bR_PD\b|manual trigger/i, notFitted),
+        [],
+        `${file} fits a manual trigger`
+      );
+    }
+  });
+
+  it("HALL-8 AC3: the assembly guide shows the labelled level shifter pin photo", async () => {
+    assert.match(
+      await readRepoFile("docs/how-to/assemble-hardware.md"),
+      /!\[[^\]]+\]\(\.\.\/reference\/assets\/level-shifter\.jpg\)/
+    );
+  });
+
+  it("HALL-8 AC4: known issues covers BSS138 rise time over long runs and the pull-up fix", async () => {
+    const knownIssues = await readRepoFile("docs/reference/known-issues.md");
+    assert.match(knownIssues, /BSS138/);
+    assert.match(knownIssues, /1\.5 kΩ/);
+  });
+
+  it("HALL-8 AC5: ADR-013 records the reused BSS138 board as a blueprint correction and is indexed", async () => {
+    const adr = await readAdr("0013");
+    assert.match(adr, /^# ADR-013: .*BSS138/im);
+    for (const topic of [/in error/, /1\.5 kΩ/, /2025/]) assert.match(adr, topic);
+    assert.match(await readRepoFile("docs/reference/adr/README.md"), /\[ADR-013\]\(\.\/0013-/);
+  });
+
+  it("HALL-8 AC5: the docs treat the 2026 parts as the design, not as deviations from it", async () => {
+    for (const file of [...asBuiltDocs, "docs/reference/adr/README.md", "CLAUDE.md"]) {
+      assert.doesNotMatch(await readRepoFile(file), /deviat|as.built|restore[^.]*2027/i, `${file} frames 2026 as a deviation`);
+    }
   });
 });

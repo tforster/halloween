@@ -17,8 +17,7 @@ Parts list for the 2026 installation: two rigs on one Pico 2, with one shared DF
   - https://www.amazon.ca/dp/B0D8HCV43H
 - 1 × speaker (_reused_)
 - 2 × WS2812B 300-pixel strips, one per rig (_reused_)
-- 1 × 74AHCT125 quad buffer, DIP-14, for the two rigs' data lines
-- 1 × momentary push button, normally open (optional manual trigger)
+- 1 × 4-channel BSS138 bidirectional level shifter board, for the two rigs' data lines (_reused_)
 
 ## 2. Power
 
@@ -27,21 +26,15 @@ Parts list for the 2026 installation: two rigs on one Pico 2, with one shared DF
   - https://www.amazon.ca/dp/B0DYHCD21G
 - 1 × 12 V 5 A supply for the amplifier (_reused_)
   - https://www.amazon.ca/dp/B01GEA8PQA
-- 6 × inline fuse holders, one per supply
-- 4 × 10 A fast-blow fuses (pixel supplies)
-- 1 × 5 A fast-blow fuse (amplifier supply)
-- 1 × 2 A fast-blow fuse (logic supply)
-  - https://www.amazon.ca/dp/B07F8RLMPB
 
 ## 3. Components
 
 - 1 × 1N5817 Schottky diode (logic rail into the Pico's VSYS)
 - 2 × 330 Ω 1/4 W resistors (series, at each strip's DIN)
 - 2 × 10 kΩ 1/4 W resistors (sum DAC_L and DAC_R into the amp input)
-- 1 × 4.7 kΩ 1/4 W resistor (GP15 pull-down, optional manual trigger only)
+- 2 × 1.5 kΩ 1/4 W resistors (pull-ups across the level shifter's HV1–HV and HV2–HV)
 - 4 × 1000 µF 10 V electrolytic capacitors (one at each injection point)
 - 2 × 100 µF 10 V electrolytic capacitors (Pico VSYS, DFPlayer VCC)
-- 1 × 100 nF ceramic capacitor (74AHCT125 VCC)
 
 ## 4. Wire and Fittings
 

@@ -28,6 +28,8 @@ Faster baud rates and back-to-back commands both lose frames; keep to the [seria
 
 WS2812B data is timing-sensitive. A full 300-pixel write blocks for about 9 ms; keep other work out of that window. The data line still needs 3.3 V → 5 V level shifting.
 
+The reused BSS138 level shifter board ([ADR-013](./adr/0013-reused-bss138-level-shifter.md)) pulls each high-side output up through only 10 kΩ. Over a 2.7 m twisted pair, about 140 pF, that rising edge takes about 1.4 µs, longer than a 1.25 µs WS2812B bit, so pixels glitch or stay dark; 1 m worked in 2025. A 1.5 kΩ resistor across HV1–HV and HV2–HV brings the time constant to about 0.2 µs, while each Pico pin sinks only about 3.6 mA when low. Bench-test each rig through its real cable. If it still glitches, feed pixel 1's +5V through a 1N400x diode: pixel 1 then runs at about 4.3 V, reads 3.3 V data as high, and passes a clean signal down the strip.
+
 ## 5. Power and Noise
 
 - 300 pixels at full white draw about 18 A in theory; the lightning effect averages 5–6 A.

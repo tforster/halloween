@@ -45,9 +45,9 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
 10. As the display owner, I want a series resistor at each strip's data input and a ground wire run with each data line, so that long data runs do not corrupt pixels.
 11. As the display owner, I want the amplifier fed from the DFPlayer's line-level DAC outputs, so that the 60 W amp gets a clean signal instead of the DFPlayer's built-in 3 W speaker output.
 12. As the display owner, I want each strip powered by two 5 V supplies (at pixel 1 and pixel 151) as in 2025, so that the far end of each strip does not suffer voltage drop.
-13. As the display owner, I want every supply on a common ground with a fuse on each output, so that logic signals are clean and a fault cannot start a fire.
+13. As the display owner, I want every supply on a common ground, so that logic signals are clean.
 14. As the display owner, I want the system to start autonomously on power-up, so that I plug it in and walk away on Halloween night.
-15. As the display owner, I want an optional manual trigger that fires a strike on a random rig, so that I can show the effect on demand while setting up.
+15. As the display owner, I want an optional manual trigger that fires a strike on a random rig, so that I can show the effect on demand while setting up. (Firmware only: the button is not fitted in 2026.)
 16. As the display owner, I want the onboard LED to indicate the controller is running, so that I can tell at a glance whether the Pico is alive.
 17. As the display owner, I want the number of rigs to be configuration rather than code, so that a third rig or a single rig needs no rewrite.
 18. As the display owner, I want each rig's data pin, pixel count and interval range set in configuration, so that I can tune one rig without affecting the other.
@@ -75,10 +75,10 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
   - Rig A data on GP16.
   - Rig B data on GP17, the adjacent pin, which is also usable by PIO.
   - DFPlayer command on UART1 TX (GP4). UART1 RX (GP5) is reserved for later use but not required, because commands are sent without feedback.
-  - Optional manual trigger stays on GP15, with an external 4.7 kΩ pull-down: RP2350 erratum E9 can latch the pad at about 2 V, which the internal pull-down cannot clear.
+  - GP15 is unwired: the manual trigger button is not fitted in 2026, and `USE_MANUAL_TRIGGER` stays `False`. A button added later goes on GP15 with an external 4.7 kΩ pull-down, because RP2350 erratum E9 can latch the pad at about 2 V, which the internal pull-down cannot clear.
   - The onboard LED (GP25) shows status.
   - Power enters at VSYS through a Schottky diode (1N5817), never VBUS, so a laptop can be plugged into USB while the display is powered without either feeding the other.
-- **Level shifting:** one 74AHCT125 (four channels), using two channels for the data lines. Each strip has a 330 Ω series resistor at its data input.
+- **Level shifting:** the 4-channel BSS138 MOSFET level shifter board reused from 2025, using two channels for the data lines: LV from the Pico's 3V3, HV from the 5 V bus. Its 10 kΩ high-side pull-ups rise too slowly for 2.7 m, so each used channel adds a 1.5 kΩ pull-up from HVn to HV. Each strip has a 330 Ω series resistor at its data input. The first version of this blueprint named a 74AHCT125 in error; the 2025 boards used this board ([ADR-013](../reference/adr/0013-reused-bss138-level-shifter.md)).
 - **Data runs:**
   - No more than 2.7 m from the level shifter to pixel 1 of each strip. That is a commonly cited ~3 m unbuffered limit less 10%.
   - Each data wire runs with a ground wire, twisted if practical.
@@ -92,8 +92,8 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
   - The +5V connection between pixels 150 and 151 is cut, so each supply feeds only its half instead of fighting the other through the strip. GND and data stay continuous.
   - One dedicated 5 V 3 A logic supply for the Pico, DFPlayer and level shifter, so a full-white flash cannot sag the controller and no 5 V power runs the 2.7 m back from a strip.
   - One 12 V 5 A supply for the amplifier.
-  - All grounds are common, meeting at a star-ground terminal block in the enclosure; each rig's grounds reach it through its data pair. Each pixel supply has a 10 A fuse, the logic supply a 2 A fuse and the 12 V supply a 5 A fuse.
-  - Decoupling capacitors as in 2025, plus 100 nF at the level shifter.
+  - All grounds are common, meeting at a star-ground terminal block in the enclosure; each rig's grounds reach it through its data pair. No fuses are fitted: each supply's own short-circuit protection is the only guard, so polarity is checked before power-on and supplies are powered one at a time.
+  - Decoupling capacitors as in 2025.
 - **Placement:** controller, level shifter, DFPlayer and amplifier in one central enclosure, with the logic and amplifier supplies beside it. Each pixel supply sits at its injection point. Only the speaker cable and the two data/ground pairs run out to the rigs.
 
 ### 4.2. Software
@@ -118,7 +118,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
   - Nothing below start-up imports hardware modules, so the same logic runs under host Python with fakes.
 - **DFPlayer protocol:** the existing MP3 player module is kept. Its public interface (play track, set volume, stop) does not change; its constructor now takes the UART instead of pins. It prints each frame it sends, which stands in for the DFPlayer in simulation.
 - **Start-up:** autonomous start on boot stays on by default. A reduced-interval test mode is a configuration switch, not an edit to the interval constants.
-- **Manual trigger:** when enabled, a press fires one strike on a randomly chosen idle rig, going through the same strike path as a timer. It fires on the press edge (a 50 ms poll that also debounces), a press while every rig is striking is ignored, and rig timers are not reset. A rig's timer that fires during a manual strike on it waits for that strike to end, then starts a fresh interval.
+- **Manual trigger:** firmware only in 2026; the button is not fitted. When enabled, a press fires one strike on a randomly chosen idle rig, going through the same strike path as a timer. It fires on the press edge (a 50 ms poll that also debounces), a press while every rig is striking is ignored, and rig timers are not reset. A rig's timer that fires during a manual strike on it waits for that strike to end, then starts a fresh interval.
 - **Status LED:** solid during start-up, then a 1 Hz heartbeat from its own task, so a stalled scheduler shows as an LED that stops blinking.
 - **Random seed:** from `os.urandom` (hardware entropy), not `time.ticks_ms()`, which repeats across boots.
 
@@ -129,8 +129,9 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
   - ADR-010, single shared audio path with latest-strike-wins.
   - ADR-011, `asyncio` scheduling.
   - ADR-012, WireViz and Wokwi for hardware diagrams and simulation[^diagram-tools].
+  - ADR-013, the reused BSS138 level shifter board.
 - **Superseded ADR:** ADR-008 (independent multi-board) is marked superseded by ADR-009.
-- **WireViz:** the installation wiring is a YAML harness file in the repo ([`wiring.yml`](../reference/assets/wiring.yml)). It covers supplies, fuses, Pico, level shifter, DFPlayer, amplifier, speaker and both strips' power injection and data. The rendered SVG is committed next to it, because GitHub does not render WireViz itself.
+- **WireViz:** the installation wiring is a YAML harness file in the repo ([`wiring.yml`](../reference/assets/wiring.yml)). It covers supplies, Pico, level shifter, DFPlayer, amplifier, speaker and both strips' power injection and data. The rendered SVG is committed next to it, because GitHub does not render WireViz itself.
 - **ASCII wiring diagram:** the WireViz SVG is about 5:1 and needs a pan-and-zoom viewer, so [Wiring Diagram](../reference/wiring-diagram.md) draws the same parts and pins as ASCII boxes and wires (HALL-7). It is kept in step with `wiring.yml` by hand; `wiring.yml` wins.
 - **Wokwi:**
   - A Wokwi project (`wokwi/diagram.json`, `wokwi/wokwi.toml`) holds a Pico (RP2040, because Wokwi's RP2350 corrupts MicroPython; see ADR-012) with two WS2812 strips on the real pins (60 pixels each, because two 300-pixel strips simulate at about 4% of real time), running the real firmware on the stock MicroPython image. `npm run simulate` mounts `src/` from the host over RFC 2217 and starts the storm in test mode.

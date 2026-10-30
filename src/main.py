@@ -7,11 +7,11 @@ wins: a new strike replaces thunder that is already playing. See
 docs/explanation/2026-blueprint.md.
 
 Hardware Configuration:
-- GPIO 16: Rig A NeoPixel data (via 74AHCT125 level shifter)
+- GPIO 16: Rig A NeoPixel data (via the BSS138 level shifter board, ADR-013)
 - GPIO 17: Rig B NeoPixel data (adjacent pin, also PIO-capable)
 - GPIO 4:  UART1 TX -> DFPlayer Mini RX
 - GPIO 5:  UART1 RX (reserved; no feedback is read)
-- GPIO 15: Optional manual trigger (pull-down, active high)
+- GPIO 15: Optional manual trigger (pull-down, active high; button not fitted in 2026)
 - GPIO 25: Onboard LED, heartbeat while the scheduler runs
 
 Concurrency:
