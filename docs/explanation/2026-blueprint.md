@@ -131,6 +131,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
   - ADR-012, WireViz and Wokwi for hardware diagrams and simulation[^diagram-tools].
 - **Superseded ADR:** ADR-008 (independent multi-board) is marked superseded by ADR-009.
 - **WireViz:** the installation wiring is a YAML harness file in the repo ([`wiring.yml`](../reference/assets/wiring.yml)). It covers supplies, fuses, Pico, level shifter, DFPlayer, amplifier, speaker and both strips' power injection and data. The rendered SVG is committed next to it, because GitHub does not render WireViz itself.
+- **ASCII wiring diagram:** the WireViz SVG is about 5:1 and needs a pan-and-zoom viewer, so [Wiring Diagram](../reference/wiring-diagram.md) draws the same parts and pins as ASCII boxes and wires (HALL-7). It is kept in step with `wiring.yml` by hand; `wiring.yml` wins.
 - **Wokwi:**
   - A Wokwi project (`wokwi/diagram.json`, `wokwi/wokwi.toml`) holds a Pico (RP2040, because Wokwi's RP2350 corrupts MicroPython; see ADR-012) with two WS2812 strips on the real pins (60 pixels each, because two 300-pixel strips simulate at about 4% of real time), running the real firmware on the stock MicroPython image. `npm run simulate` mounts `src/` from the host over RFC 2217 and starts the storm in test mode.
   - Wokwi has no DFPlayer part, so the DFPlayer UART is watched on the serial monitor in its place.
