@@ -2,6 +2,10 @@
 
 Technical blueprint for the 2026 Halloween lightning and thunder display. It feeds the 2026 epic and its child stories in Paca (project `HALL`).
 
+> [!NOTE]
+>
+> The 2026 season is closed. On the night the display ran thunder only, one timer every 30 s, because the strips' data signal was corrupt; see the [2026 Retrospective](./2026-retrospective.md).
+
 ## Table of Contents <!-- omit in toc -->
 
 - [1. Problem Statement](#1-problem-statement)
@@ -17,7 +21,7 @@ Technical blueprint for the 2026 Halloween lightning and thunder display. It fee
 
 ## 1. Problem Statement
 
-The 2025 display used three complete boards: three Pico 2s, three MP3 players, three amplifiers, three speakers and nine power supplies. Each board had to be flashed, wired, powered and debugged separately. For 2026 the display shrinks to two rigs that reuse last year's 300-pixel strips. Duplicating a whole controller, MP3 player, amplifier and speaker for each rig is more hardware, more wiring and more deployment effort than two rigs need.
+The 2025 display used two complete boards: two Pico 2s, two MP3 players, two amplifiers, two speakers and six power supplies ([2025 Retrospective](./2025-retrospective.md)). Each board had to be flashed, wired, powered and debugged separately. For 2026 the display keeps two rigs that reuse last year's 300-pixel strips. Duplicating a whole controller, MP3 player, amplifier and speaker for each rig is more hardware, more wiring and more deployment effort than two rigs need.
 
 ## 2. Solution
 
@@ -61,7 +65,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
 26. As a developer, I want hardware objects created only at start-up and passed in, so that the same logic runs on the Pico and in tests.
 27. As a developer, I want a reduced-interval test mode, so that I can watch several strikes in a minute during bench testing.
 28. As a developer, I want `npm run deploy` to keep working for one board, so that deployment stays one command.
-29. As an AI agent, I want CLAUDE.md and the docs updated for the two-rig design, so that I don't work from the three-board 2025 assumptions.
+29. As an AI agent, I want CLAUDE.md and the docs updated for the two-rig design, so that I don't work from the independent-board 2025 assumptions.
 30. As an AI agent, I want each 2026 architectural choice recorded as an ADR, so that I understand why the design changed.
 31. As a trick-or-treater, I want lightning and thunder to arrive together, so that the effect is convincing.
 32. As a neighbour, I want the thunder to stay at a sensible volume, so that the display is dramatic without being a nuisance.
@@ -137,7 +141,7 @@ When strikes overlap, both rigs animate at the same time. The thunder for the la
   - A Wokwi project (`wokwi/diagram.json`, `wokwi/wokwi.toml`) holds a Pico (RP2040, because Wokwi's RP2350 corrupts MicroPython; see ADR-012) with two WS2812 strips on the real pins (60 pixels each, because two 300-pixel strips simulate at about 4% of real time), running the real firmware on the stock MicroPython image. `npm run simulate` mounts `src/` from the host over RFC 2217 and starts the storm in test mode.
   - Wokwi has no DFPlayer part, so the DFPlayer UART is watched on the serial monitor in its place.
 - **Mermaid** stays for system context, runtime flow and state diagrams.
-- **Updates:** README, CLAUDE.md and the hardware, how-to and reference docs are updated from three boards to two rigs on one controller. The "Previous Years" table gains a 2026 row at season end.
+- **Updates:** README, CLAUDE.md and the hardware, how-to and reference docs are updated from two independent boards to two rigs on one controller. The "Previous Years" table gains a 2026 row at season end.
 
 ## 5. Testing Decisions
 

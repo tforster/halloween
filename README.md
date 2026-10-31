@@ -7,16 +7,17 @@ A Raspberry Pi Pico 2-based Halloween display controller that creates synchronis
 - 🎵 High-quality MP3 audio via dedicated hardware module
 - ⚡ 300+ NeoPixel LED lightning animations
 - 🎲 Autonomous random triggering (60-120 second intervals)
-- 📦 Multi-board deployment (3 independent units)
+- 📦 One Pico 2 driving multiple rigs, with shared audio
 
 **For detailed technical documentation, see [the docs](docs/README.md).**
 
 ## Previous Years
 
-| Year | Highlights                                                                                                                                                                                      | Source                                                        |
-| :--- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------ |
-| 2025 | • Raspberry Pi Pico 2 + DFPlayer Mini MP3 module (16-bit audio from MicroSD)<br>• Autonomous random triggering every 60-120 seconds<br>• Three independent boards with three lightning patterns | [`2025` tag](https://github.com/tforster/halloween/tree/2025) |
-| 2024 | • ESP32 with built-in 8-bit DAC playing WAV thunder<br>• Threaded, simultaneous lightning and thunder<br>• Single board, manually triggered by switch                                           | [`2024` tag](https://github.com/tforster/halloween/tree/2024) |
+| Year | Highlights                                                                                                                                                                                                                                                                 | Source                                                        |
+| :--- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------ |
+| 2026 | • One Pico 2 designed to drive two rigs on independent 60-120 second timers, with one shared DFPlayer, amp and speaker<br>• Ran thunder only on the night, every 30 seconds: the strips' data signal was corrupt ([retrospective](docs/explanation/2026-retrospective.md)) | [`2026` tag](https://github.com/tforster/halloween/tree/2026) |
+| 2025 | • Raspberry Pi Pico 2 + DFPlayer Mini MP3 module (16-bit audio from MicroSD)<br>• Autonomous random triggering every 60-120 seconds<br>• Two independent rigs, each a complete board, with three lightning patterns                                                        | [`2025` tag](https://github.com/tforster/halloween/tree/2025) |
+| 2024 | • ESP32 with built-in 8-bit DAC playing WAV thunder<br>• Threaded, simultaneous lightning and thunder<br>• Single board, manually triggered by switch                                                                                                                      | [`2024` tag](https://github.com/tforster/halloween/tree/2024) |
 
 ## Quick Start
 
@@ -92,7 +93,8 @@ npm run deploy
 ## Documentation
 
 - **[Documentation home](docs/README.md)** - Tutorials, how-to guides, reference and explanation
-- **[2026 Blueprint](docs/explanation/2026-blueprint.md)** - The two-rig, one-Pico design in progress
+- **[2026 Blueprint](docs/explanation/2026-blueprint.md)** - The two-rig, one-Pico design
+- **[2026 Retrospective](docs/explanation/2026-retrospective.md)** - What ran in 2026 and what 2027 changes first
 - **[CLAUDE.md](CLAUDE.md)** - AI agent context and conventions
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history
 

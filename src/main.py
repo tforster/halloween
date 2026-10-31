@@ -31,9 +31,11 @@ from mp3_player import CMD_DELAY_MS
 
 # One entry per rig. Add or remove entries to change the number of rigs; no code changes.
 # Pins are GPIO numbers; intervalS is the (min, max) wait in seconds after a strike ends.
+# As run on Halloween 2026: thunder only. The strips' data signal was corrupt on the night, so one rig
+# drives the thunder every 30 s with its strip disconnected. The two-rig design is rig A on GP16 and
+# rig B on GP17, each (60, 120); see docs/explanation/2026-retrospective.md.
 RIGS = [
-    {"name": "A", "pin": 16, "pixels": 300, "intervalS": (60, 120)},
-    {"name": "B", "pin": 17, "pixels": 300, "intervalS": (60, 120)},
+    {"name": "A", "pin": 16, "pixels": 300, "intervalS": (30, 30)},
 ]
 
 # MP3 Player Configuration

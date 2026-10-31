@@ -239,7 +239,8 @@ def test_ac5_rig_count_follows_configuration(rigCount):
 
 
 def test_ac8_test_mode_shortens_intervals_without_editing_the_interval_constants():
-    storm, clock, [strip], _ = makeStorm([rigConfig("A", (60, 120))], testMode=True)
+    config = rigConfig("A", (60, 120))
+    storm, clock, [strip], _ = makeStorm([config], testMode=True)
 
     runFor(storm, clock, 5 * 60_000)
 
@@ -248,7 +249,7 @@ def test_ac8_test_mode_shortens_intervals_without_editing_the_interval_constants
     waits = waitsBetween(strip.strikes())
     assert len(waits) >= 20
     assert all(minS * 1000 <= wait <= maxS * 1000 + 1 for wait in waits), waits
-    assert main.RIGS[0]["intervalS"] == (60, 120), "configured intervals stay as written"
+    assert config["intervalS"] == (60, 120), "configured intervals stay as written"
 
 
 class FakeButton:

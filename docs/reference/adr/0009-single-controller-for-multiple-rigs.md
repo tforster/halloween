@@ -3,7 +3,7 @@
 **Status:** Accepted (2026 season). Supersedes [ADR-008](./0008-independent-multi-board-operation.md).
 
 **Context:**
-In 2025 three complete boards each drove one strip: three Pico 2s, three MP3 players, three amplifiers, three speakers and nine supplies, each flashed, wired and debugged separately ([ADR-008](./0008-independent-multi-board-operation.md)). For 2026 the display shrinks to two rigs that reuse the 2025 300-pixel strips ([2026 blueprint](../../explanation/2026-blueprint.md#1-problem-statement)). Options:
+In 2025 two complete boards each drove one strip: two Pico 2s, two MP3 players, two amplifiers, two speakers and six supplies, each flashed, wired and debugged separately ([ADR-008](./0008-independent-multi-board-operation.md)). For 2026 the display keeps two rigs that reuse the 2025 300-pixel strips ([2026 blueprint](../../explanation/2026-blueprint.md#1-problem-statement)). Options:
 
 1. **Two independent boards:** repeat 2025 with two boards. Twice the controller, audio and deployment work.
 2. **One controller, rigs far apart:** one Pico 2 with long data runs. Past about 3 m unbuffered, WS2812B data needs a buffer or a differential link.

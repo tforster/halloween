@@ -1,6 +1,6 @@
 // wiring-docs.test.js — guards the two-rig hardware docs set by HALL-4
 //
-// HALL-4 moved the hardware docs from three 2025 boards to two rigs on one Pico, corrected the amp
+// HALL-4 moved the hardware docs from the independent 2025 boards to two rigs on one Pico, corrected the amp
 // feed from SPK_1/SPK_2 to DAC_L/DAC_R, and recorded the decisions as ADRs. These tests read the
 // docs so a later story cannot bring the 2025 wiring back.
 

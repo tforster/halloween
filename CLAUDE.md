@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-An annual Halloween display: WS2812B NeoPixel lightning with synchronised MP3 thunder, driven by a Raspberry Pi Pico 2 running MicroPython. Each season is a new edition on `main`; earlier ones are frozen as year tags (`2024` ESP32, `2025` three independent Pico boards).
+An annual Halloween display: WS2812B NeoPixel lightning with synchronised MP3 thunder, driven by a Raspberry Pi Pico 2 running MicroPython. Each season is a new edition on `main`; earlier ones are frozen as year tags (`2024` ESP32, `2025` two independent Pico boards, `2026` one Pico, thunder only).
 
-**2026 is in progress.** The target is two rigs (reused 300-pixel strips) driven by **one** Pico 2, each striking on its own random 60–120 s timer, with one DFPlayer Mini, amplifier and speaker shared on a latest-strike-wins basis. `src/` holds the two-rig firmware (HALL-3) and `docs/reference/assets/wiring.yml` the two-rig wiring (HALL-4). Where docs disagree, `docs/explanation/2026-blueprint.md` is the target: read it before any firmware, wiring or hardware-doc change. Work is tracked in Paca project `HALL` under epic HALL-1; each story names the blueprint section it builds.
+**2026 is closed (tag `2026`).** The design is two rigs (reused 300-pixel strips) driven by **one** Pico 2, each striking on its own random 60–120 s timer, with one DFPlayer Mini, amplifier and speaker shared on a latest-strike-wins basis; `docs/explanation/2026-blueprint.md` describes it and `docs/reference/assets/wiring.yml` holds the wiring. On the night it ran thunder only, so `src/main.py` holds that as-run config: one rig on a fixed 30 s timer. Read `docs/explanation/2026-retrospective.md` before starting 2027: its actions and carried-over fixes are the starting point. Work is tracked in Paca project `HALL`.
 
 ## Commands
 
