@@ -1,6 +1,6 @@
 {
   "name": "@tforster/halloween",
-  "version": "2025.0.0",
+  "version": "2026.0.0",
   "description": "Halloween Lightning & Thunder Effect - Raspberry Pi Pico 2 with synchronised LED and audio effects",
   "homepage": "https://github.com/tforster/halloween#readme",
   "bugs": {
